@@ -131,5 +131,8 @@ dependencies {
     //Firebase
     implementation "com.firebaseui:firebase-ui-auth:$firebaseVersion"
 
+    //Logger
+    implementation "com.jakewharton.timber:timber:$timberVersion"
+
 
 }

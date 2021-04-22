@@ -24,6 +24,7 @@ class SaveReminderFragment : BaseFragment() {
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_save_reminder, container, false)
 
+        setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)
 
         binding.viewModel = _viewModel
