@@ -50,4 +50,6 @@
     <string name="style_parsing_error">Style parsing failed</string>
     <string name="foreground_only_location_permission">Request foreground only location permission</string>
     <string name="error_location_settings">Error getting location settings resolution</string>
+    <string name="geofence_added">Added Geofence</string>
+    <string name="geofence_broadcast_error">Geofence broadcast error</string>
 </resources>

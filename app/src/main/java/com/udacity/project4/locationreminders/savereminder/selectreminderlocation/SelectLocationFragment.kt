@@ -82,13 +82,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-//        TODO: zoom to the user location after taking his permission
+
         //Construct a fusedLocationProviderClient
         fusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(requireContext())
 
-//        TODO: add style to the map
-//        TODO: put a marker to location that the user selected
+
 
 
 //        TODO: call this function after the user confirms on the selected location
@@ -199,7 +198,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     }
 
-    private fun checkDeviceLocationSettingsAndStartGeofence(resolve: Boolean = true) {
+    private fun checkDeviceLocationSettingsAndStartGeofence(
+        resolve: Boolean = true
+    ) {
 
         /*
         * Get the best and most recent location of the device, which may be null in rare
@@ -231,9 +232,18 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
                 ).setAction(android.R.string.ok) {
                     checkDeviceLocationSettingsAndStartGeofence()
-                }
+                }.show()
             }
         }
+
+//        locationSettingsResponseTask.addOnCompleteListener{
+//            if(data != null && it.isSuccessful && !isDetached){
+//                Timber.i(getString(R.string.geofence_added))
+//                if(_viewModel.validateAndSaveReminder(reminderData = data)){
+//
+//                }
+//            }
+//        }
     }
 
     override fun onMapReady(googleMap: GoogleMap?) {
@@ -249,6 +259,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setMapLongClick(map)
     }
 
+    //        TODO: add style to the map
     private fun setMapStyle(map: GoogleMap) {
         try {
             val success = map.setMapStyle(
@@ -266,6 +277,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
+    //        TODO: put a marker to location that the user selected
     private fun setPoiClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
 
@@ -340,6 +352,24 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
+    //        TODO: zoom to the user location after taking his permission
+    @SuppressLint("MissingPermission")
+    private fun zoomToDeviceLocation() {
+        fusedLocationProviderClient.lastLocation.addOnSuccessListener(requireActivity()) { location ->
+            if (location != null) {
+                val userLatLng = LatLng(location.latitude, location.longitude)
+                val zoomLevel = 15f
+                map.moveCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                        userLatLng,
+                        zoomLevel
+                    )
+                )
+            }
+        }
+    }
+
+
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun foregroundAndBackgroundLocationPermissionApproved() : Boolean {
         val foregroundLocationApproved = (
@@ -378,20 +408,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         )
     }
 
-    @SuppressLint("MissingPermission")
-    fun zoomToDeviceLocation() {
-        fusedLocationProviderClient.lastLocation.addOnSuccessListener(requireActivity()) { location ->
-            if (location != null) {
-                val userLatLng = LatLng(location.latitude, location.longitude)
-                val zoomLevel = 15f
-                map.moveCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        userLatLng,
-                        zoomLevel
-                    )
-                )
-            }
-        }
-    }
+
 
 }
