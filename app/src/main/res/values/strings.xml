@@ -43,4 +43,11 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="fab_button">Floating Action Buttong</string>
+    <string name="current_location_is_empty">Current location is null. Using defaults.</string>
+    <string name="location_exception">Exception</string>
+    <string name="custom_location">Custom Location Indicated</string>
+    <string name="style_exception">Can not Find Style. Error</string>
+    <string name="style_parsing_error">Style parsing failed</string>
+    <string name="foreground_only_location_permission">Request foreground only location permission</string>
+    <string name="error_location_settings">Error getting location settings resolution</string>
 </resources>
