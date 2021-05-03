@@ -42,7 +42,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     companion object {
         private val REQUEST_LOCATION_PERMISSION = 1
-        private const val DEFAULT_ZOOM = 15
+        private const val DEFAULT_ZOOM = 15f
         private const val LOCATION_PERMISSION_INDEX = 0
         private const val REQUEST_CODE_BACKGROUND = 201
         private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
@@ -295,7 +295,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 }
             }
 
-            val cameraZoom = CameraUpdateFactory.newLatLngZoom(it, 18f)
+            val cameraZoom = CameraUpdateFactory.newLatLngZoom(it, DEFAULT_ZOOM)
             map.moveCamera(cameraZoom)
             val markerInfo = map.addMarker(
                 MarkerOptions()
@@ -312,7 +312,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         fusedLocationProviderClient.lastLocation.addOnSuccessListener(requireActivity()) { location ->
             if (location != null) {
                 val userLatLng = LatLng(location.latitude, location.longitude)
-                val zoomLevel = 15f
+                val zoomLevel = DEFAULT_ZOOM
                 map.moveCamera(
                     CameraUpdateFactory.newLatLngZoom(
                         userLatLng,
