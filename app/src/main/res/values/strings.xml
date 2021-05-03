@@ -52,4 +52,6 @@
     <string name="error_location_settings">Error getting location settings resolution</string>
     <string name="geofence_added">Added Geofence</string>
     <string name="geofence_broadcast_error">Geofence broadcast error</string>
+    <string name="geoservice_error">Geofence Transition Job Intent Service Error</string>
+    <string name="title_detail">Geofencing</string>
 </resources>

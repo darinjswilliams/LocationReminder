@@ -1,7 +1,6 @@
 package com.udacity.project4.locationreminders.savereminder.selectreminderlocation
 
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.IntentSender
@@ -9,13 +8,9 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Location
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.*
-import androidx.annotation.RequiresApi
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.library.BuildConfig
 import androidx.navigation.fragment.findNavController
@@ -37,6 +32,8 @@ import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
+import com.udacity.project4.utils.foregroundAndBackgroundLocationPermissionApproved
+import com.udacity.project4.utils.requestForegroundAndBackgroundLocationPermissions
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 import timber.log.Timber
@@ -88,8 +85,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             LocationServices.getFusedLocationProviderClient(requireContext())
 
 
-
-
 //        TODO: call this function after the user confirms on the selected location
         return binding.root
     }
@@ -133,70 +128,57 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         else -> super.onOptionsItemSelected(item)
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.isEmpty() ||
+                (grantResults[LOCATION_PERMISSION_INDEX] ==
+                        PackageManager.PERMISSION_DENIED) ||
+                (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
+                        grantResults[BACKROUND_LOCATION_PERMISSION_INDEX] ==
+                        PackageManager.PERMISSION_DENIED)
+            ) {
+                Snackbar.make(
+                    binding.constraintLayoutMaps,
+                    R.string.permission_denied_explanation,
+                    Snackbar.LENGTH_INDEFINITE
+                )
+                    .setAction(R.string.settings) {
+                        startActivity(Intent().apply {
+                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            data = Uri.fromParts("package", BuildConfig.LIBRARY_PACKAGE_NAME, null)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        })
+                    }.show()
 
-    private fun isPermissionGranted(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) === PackageManager.PERMISSION_GRANTED
+
+            } else {
+                checkDeviceLocationSettingsAndStartGeofence()
+            }
+        }
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "NewApi")
     private fun enableMyLocation() {
-        if (isPermissionGranted()) {
+        if (foregroundAndBackgroundLocationPermissionApproved(requireActivity())) {
             map.isMyLocationEnabled = true
             map.uiSettings.isMyLocationButtonEnabled = true
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                //TODO check device location
-                checkDeviceLocationSettingsAndStartGeofence()
 
-            } else {
-                //TODO requestQPermission
-                checkRequirePermission()
-            }
+            //TODO check device location
+            Timber.i("ForegroundAndBackgroundLocationPermissionApproved")
+            checkDeviceLocationSettingsAndStartGeofence()
 
         } else {
-
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                REQUEST_LOCATION_PERMISSION
-            )
+            //TODO requestQPermission
+                Timber.i("RequestForegroundAndBackgroundLocationPermissions")
+            context?.let { requestForegroundAndBackgroundLocationPermissions(it) }
+            checkDeviceLocationSettingsAndStartGeofence()
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun checkRequirePermission() {
-
-        val foreGroundPermission = ActivityCompat.checkSelfPermission(
-            requireActivity(),
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if (foreGroundPermission) {
-            val hasBackGroundPermission = ActivityCompat.checkSelfPermission(
-                requireActivity(),
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-            if (hasBackGroundPermission) {
-                checkDeviceLocationSettingsAndStartGeofence()
-            } else {
-                ActivityCompat.requestPermissions(
-                    requireActivity(),
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    ),
-                    REQUEST_CODE_BACKGROUND
-                )
-            }
-        }
-
-    }
 
     private fun checkDeviceLocationSettingsAndStartGeofence(
         resolve: Boolean = true
@@ -224,7 +206,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     )
 
                 } catch (sendEx: IntentSender.SendIntentException) {
-                    Timber.d(getString(R.string.error_location_settings) , "... ${sendEx.message}")
+                    Timber.d(getString(R.string.error_location_settings), "... ${sendEx.message}")
                 }
             } else {
                 Snackbar.make(
@@ -236,14 +218,19 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             }
         }
 
-//        locationSettingsResponseTask.addOnCompleteListener{
-//            if(data != null && it.isSuccessful && !isDetached){
-//                Timber.i(getString(R.string.geofence_added))
-//                if(_viewModel.validateAndSaveReminder(reminderData = data)){
-//
-//                }
-//            }
-//        }
+        //SET GEO FENCE
+        locationSettingsResponseTask.addOnSuccessListener {
+            if( locationSettingsResponseTask.isSuccessful){
+                //add geofence
+                Timber.i("AddGeoFence")
+            }
+        }
+
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        checkDeviceLocationSettingsAndStartGeofence(false)
     }
 
     override fun onMapReady(googleMap: GoogleMap?) {
@@ -269,11 +256,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 )
             )
 
-            if(!success) {
+            if (!success) {
                 Timber.e(getString(R.string.style_parsing_error))
             }
-        } catch (e: Resources.NotFoundException){
-            Timber.e( getString(R.string.style_exception), "... ${e.localizedMessage}")
+        } catch (e: Resources.NotFoundException) {
+            Timber.e(getString(R.string.style_exception), "... ${e.localizedMessage}")
         }
     }
 
@@ -295,40 +282,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        if (requestCode == REQUEST_LOCATION_PERMISSION) {
-            if (grantResults.isEmpty() ||
-                (grantResults[LOCATION_PERMISSION_INDEX] ==
-                        PackageManager.PERMISSION_DENIED) ||
-                (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
-                        grantResults[BACKROUND_LOCATION_PERMISSION_INDEX] ==
-                        PackageManager.PERMISSION_DENIED)
-            )
-            {
-               Snackbar.make(
-                   binding.constraintLayoutMaps,
-                   R.string.permission_denied_explanation,
-                   Snackbar.LENGTH_INDEFINITE
-               )
-                   .setAction(R.string.settings){
-                       startActivity(Intent().apply {
-                           action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                           data = Uri.fromParts("package", BuildConfig.LIBRARY_PACKAGE_NAME, null)
-                           flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                       })
-                   }.show()
-
-
-            } else
-            {
-                checkDeviceLocationSettingsAndStartGeofence()
-            }
-        }
-    }
 
     private fun setMapLongClick(map: GoogleMap) {
         map.setOnMapLongClickListener {
@@ -355,6 +308,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     //        TODO: zoom to the user location after taking his permission
     @SuppressLint("MissingPermission")
     private fun zoomToDeviceLocation() {
+        Timber.i("ZoomDeviceLocation")
         fusedLocationProviderClient.lastLocation.addOnSuccessListener(requireActivity()) { location ->
             if (location != null) {
                 val userLatLng = LatLng(location.latitude, location.longitude)
@@ -368,46 +322,4 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             }
         }
     }
-
-
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun foregroundAndBackgroundLocationPermissionApproved() : Boolean {
-        val foregroundLocationApproved = (
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(requireContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION))
-        val backgroundPermissionApproved =
-            if (runningQOrLater) {
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        )
-            } else {
-                true
-            }
-        return foregroundLocationApproved && backgroundPermissionApproved
-    }
-
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun requestForegroundAndBackgroundLocationPermissions() {
-        if (foregroundAndBackgroundLocationPermissionApproved())
-            return
-        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-        val resultCode = when {
-            runningQOrLater -> {
-                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
-            }
-            else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
-        }
-        Timber.d(getString(R.string.foreground_only_location_permission))
-        ActivityCompat.requestPermissions(
-            requireActivity(),
-            permissionsArray,
-            resultCode
-        )
-    }
-
-
-
 }

@@ -115,9 +115,9 @@ class SaveReminderFragment : BaseFragment() {
             .build()
 
         // When removeGeofences() completes, regardless of its success or failure, add the new geofences.
-        geofencingClient.removeGeofences(geofencePendingIntent)?.run {
+        geofencingClient.removeGeofences(geofencePendingIntent).run {
             addOnCompleteListener({
-                geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
+                geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
                     addOnSuccessListener {
 //                        Toast.makeText(
 //                            context,
