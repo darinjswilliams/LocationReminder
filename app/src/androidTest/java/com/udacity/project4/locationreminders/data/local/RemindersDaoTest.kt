@@ -13,6 +13,7 @@ import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -26,6 +27,7 @@ class RemindersDaoTest {
 
     //Since your testing Architecture components
     //This will execute each task synchronsously
+    @get:Rule
     var instanteExecutorRule = InstantTaskExecutorRule()
 
     private lateinit var database: RemindersDatabase
@@ -60,10 +62,10 @@ class RemindersDaoTest {
             reminderById as ReminderDTO,
             notNullValue()
         )
-        assertThat(reminderById?.id, `is`(reminderDTO.id))
-        assertThat(reminderById?.title, `is`(reminderDTO.title))
-        assertThat(reminderById?.location, `is`(reminderDTO.location))
-        assertThat(reminderById?.latitude, `is`(reminderDTO.latitude))
-        assertThat(reminderById?.longitude, `is`(reminderDTO.longitude))
+        assertThat(reminderById.id, `is`(reminderDTO.id))
+        assertThat(reminderById.title, `is`(reminderDTO.title))
+        assertThat(reminderById.location, `is`(reminderDTO.location))
+        assertThat(reminderById.latitude, `is`(reminderDTO.latitude))
+        assertThat(reminderById.longitude, `is`(reminderDTO.longitude))
     }
 }
