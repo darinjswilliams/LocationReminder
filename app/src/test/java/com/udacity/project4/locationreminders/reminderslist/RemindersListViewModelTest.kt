@@ -9,5 +9,6 @@ import org.junit.runner.RunWith
 class RemindersListViewModelTest {
 
     //TODO: provide testing to the RemindersListViewModel and its live data objects
+    //TODO write test for loadReminders and invalidateShowNodata
 
 }

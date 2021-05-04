@@ -3,7 +3,9 @@ package com.udacity.project4.locationreminders.geofence
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
+import com.udacity.project4.R
 import timber.log.Timber
 
 /**
@@ -22,22 +24,21 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         val geofenceEvent = GeofencingEvent.fromIntent(intent)
         Timber.i("BROADCAST RECEIVER ENTER")
 
-        GeofenceTransitionsJobIntentService.enqueueWork(context, intent)
-//        if (geofenceEvent.hasError()) {
-//            Timber.e(
-//                context.getString(R.string.geofence_broadcast_error),
-//                ".....${geofenceEvent.errorCode}"
-//            )
-//            return
-//        }
-//
-//
-//        when (geofenceEvent.geofenceTransition) {
-//            Geofence.GEOFENCE_TRANSITION_ENTER -> {
-//                GeofenceTransitionsJobIntentService.enqueueWork(context, intent)
-//                Timber.i(context.getString(R.string.geofence_entered))
-//            }
-//        }
+        if (geofenceEvent.hasError()) {
+            Timber.e(
+                context.getString(R.string.geofence_broadcast_error),
+                ".....${geofenceEvent.errorCode}"
+            )
+            return
+        }
+
+
+        when (geofenceEvent.geofenceTransition) {
+            Geofence.GEOFENCE_TRANSITION_ENTER -> {
+                Timber.i(context.getString(R.string.geofence_entered))
+                GeofenceTransitionsJobIntentService.enqueueWork(context, intent)
+            }
+        }
 
     }
 
