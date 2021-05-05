@@ -8,14 +8,15 @@ import androidx.test.filters.SmallTest
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.notNullValue
+import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.hasSize
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.*
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
@@ -48,10 +49,8 @@ class RemindersDaoTest {
     fun saveReminder_whenReminderIsPopulated_thenInsertIntoDatabase() = runBlockingTest {
 
         //Given
-        val reminderDTO = ReminderDTO(
-            "someTitle",
-            "someDescription", "somelocation", 32.776665, -96.796989
-        )
+        val reminderDTO = buildReminderItem()
+
         database.reminderDao().saveReminder(reminderDTO)
 
         //When
@@ -68,4 +67,92 @@ class RemindersDaoTest {
         assertThat(reminderById.latitude, `is`(reminderDTO.latitude))
         assertThat(reminderById.longitude, `is`(reminderDTO.longitude))
     }
+
+    @Test
+    //subjectUnderTest_actionOrInput_resultState
+    fun getReminders_whenNoReminderIdisProvided_returnListOfReminders() = runBlockingTest {
+
+
+        //Given
+        val reminderDTOs: List<ReminderDTO> = buildReminderLocationItems()
+
+        database.reminderDao().saveMultipleReminders(reminderDTOs)
+
+        //When
+        val reminders = database.reminderDao().getReminders()
+
+
+        //Then
+        assertThat(reminders, not(emptyList()))
+        assertThat(reminders, hasSize(reminderDTOs.size))
+
+    }
+
+
+    @Test
+    //subjectUnderTest_actionOrInput_resultState
+    fun getReminderById_whenReminderIsSave_thenReturnSaveReminderWithSameId() = runBlockingTest {
+
+        //Given
+        val reminderDTO = buildReminderItem()
+
+        database.reminderDao().saveReminder(reminderDTO)
+
+
+        //When
+        val reminderById = database.reminderDao().getReminderById(reminderDTO.id)
+
+
+        //Then
+        assertThat<ReminderDTO>(
+            reminderById as ReminderDTO,
+            notNullValue()
+        )
+        assertThat(reminderById.id, `is`(reminderDTO.id))
+        assertThat(reminderById.longitude, `is`(reminderDTO.longitude))
+        assertThat(reminderById.latitude, `is`(reminderDTO.latitude))
+    }
+
+
+    @Test
+    //subjectUnderTest_actionOrInput_resultState
+    fun deleteAllReminders_whenAllReminderItemsAreDeleted_returnEmptyList() = runBlockingTest {
+
+        //Given
+        val reminderDTOs = buildReminderLocationItems()
+        database.reminderDao().saveMultipleReminders(reminderDTOs)
+
+
+        //When
+        database.reminderDao().deleteAllReminders()
+
+        val reminders = database.reminderDao().getReminders()
+
+
+        //Then
+        assertThat(reminders,  `is`(Collections.EMPTY_LIST))
+
+    }
+
+
+    private fun buildReminderItem() = ReminderDTO(
+            "someTitle",
+            "someDescription", "somelocation", 32.776665, -96.796989
+        )
+
+
+    private fun buildReminderLocationItems() = arrayListOf(
+        ReminderDTO(
+            "someTitleOne", "someDescriptionA",
+            "somelocationA", 32.776665, -96.796989
+        ),
+        ReminderDTO(
+            "someTitleTwo", "someDescriptionB",
+            "somelocationB", 33.776665, -96.896989
+        ),
+        ReminderDTO(
+            "someTitleThree", "someDescriptionC",
+            "somelocationC", 31.776665, -95.896989
+        )
+    )
 }
