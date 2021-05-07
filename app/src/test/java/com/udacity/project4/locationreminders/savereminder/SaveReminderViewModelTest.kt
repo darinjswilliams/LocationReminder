@@ -12,10 +12,12 @@ import com.udacity.project4.locationreminders.rule.MainCoroutineRule
 import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 import org.robolectric.annotation.Config
 
 @Config(sdk = [Build.VERSION_CODES.P])
@@ -36,6 +38,11 @@ class SaveReminderViewModelTest {
         fakeDataSource = FakeDataSource()
         saveReminderViewModel =
             SaveReminderViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
+    }
+
+    @After
+    fun tearDown() {
+        stopKoin()
     }
 
     //TODO: provide testing to the SaveReminderView and its live data objects
@@ -70,9 +77,6 @@ class SaveReminderViewModelTest {
         }
 
 
-
-
-
     @Test
     //subjectUnderTest_actionOrInput_resultState
     fun saveReminder_whenGivenValidReminderItem_thenSaveReminderItemReturnTrue() =
@@ -83,7 +87,7 @@ class SaveReminderViewModelTest {
 
             //When
             val saveReminderResult = saveReminderViewModel.validateEnteredData(reminderData)
-            assertThat(saveReminderResult,`is`(true))
+            assertThat(saveReminderResult, `is`(true))
 
             //Then
             saveReminderViewModel.validateAndSaveReminder(reminderData)
@@ -91,68 +95,87 @@ class SaveReminderViewModelTest {
             reminderResult as Result.Success
 
 
-            assertThat(saveReminderViewModel.showToast.value,
-                `is`(equalTo("Reminder Saved !")))
+            assertThat(
+                saveReminderViewModel.showToast.value,
+                `is`(equalTo("Reminder Saved !"))
+            )
         }
 
 
     @Test
     //subjectUnderTest_actionOrInput_resultState
-    fun saveReminder_whenReminderItemIsNotValid_thenReturnFalse()
-    = mainCoroutineRule.runBlockingTest {
+    fun saveReminder_whenReminderItemIsNotValid_thenReturnFalse() =
+        mainCoroutineRule.runBlockingTest {
 
-        //Given
-        val reminderData = buildReminderData()
+            //Given
+            val reminderData = buildReminderData()
 
-         reminderData.title = null
+            reminderData.title = null
 
-        //When
-        val saveReminderResult = saveReminderViewModel.validateEnteredData(reminderData)
+            //When
+            val saveReminderResult = saveReminderViewModel.validateEnteredData(reminderData)
 
-        //Then
-        assertThat(saveReminderResult,`is`(false))
-    }
+            //Then
+            assertThat(saveReminderResult, `is`(false))
+        }
 
     @Test
     //subjectUnderTest_actionOrInput_resultState
     fun validateEnteredData_whenReminderItemIsValid_returnTrue() {
-        TODO("Not yet implemented")
+        //Given
+        val reminderData = buildReminderData()
+
+        //When
+        val saveReminderResult = saveReminderViewModel.validateEnteredData(reminderData)
+
+
+        //Then
+        assertThat(saveReminderResult, `is`(true))
+
     }
 
     @Test
     //subjectUnderTest_actionOrInput_resultState
     fun validateEnteredData_whenReminderItemsNotValid_returnFalse() {
-        TODO("Not yet implemented")
+        //Given
+        val reminderData = buildReminderData()
+        reminderData.title = null
+
+        //When
+        val saveReminderResult = saveReminderViewModel.validateEnteredData(reminderData)
+
+        //Then
+        assertThat(saveReminderResult, `is`(false))
     }
 
     @Test
     //subjectUnderTest_actionOrInput_resultState
-    fun onClear_whenReminderObjectIsSave_returnClearReminderItemOnNextSave() = mainCoroutineRule.runBlockingTest {
+    fun onClear_whenReminderObjectIsSave_returnClearReminderItemOnNextSave() =
+        mainCoroutineRule.runBlockingTest {
 
-        //Given
-        val reminderData = buildReminderData()
+            //Given
+            val reminderData = buildReminderData()
 
-        //When
-        saveReminderViewModel.validateAndSaveReminder(reminderData)
-        val reminderResult = fakeDataSource.getReminder(reminderData.id)
-        reminderResult as Result.Success
-        assertThat(saveReminderViewModel.showToast.value,
-            `is`(equalTo("Reminder Saved !")))
+            //When
+            saveReminderViewModel.validateAndSaveReminder(reminderData)
+            val reminderResult = fakeDataSource.getReminder(reminderData.id)
+            reminderResult as Result.Success
+            assertThat(
+                saveReminderViewModel.showToast.value,
+                `is`(equalTo("Reminder Saved !"))
+            )
 
-        //then
-        saveReminderViewModel.onClear()
-        assertThat(saveReminderViewModel.latitude.value, `is`(nullValue()))
-
-
-        fakeDataSource.deleteAllReminders()
-        val reminderPastResult = fakeDataSource.getReminder(reminderData.id)
-        val errorResult = reminderPastResult as Result.Error
-        assertThat(reminderPastResult, `is`(errorResult))
-
-    }
+            //then
+            saveReminderViewModel.onClear()
+            assertThat(saveReminderViewModel.latitude.value, `is`(nullValue()))
 
 
+            fakeDataSource.deleteAllReminders()
+            val reminderPastResult = fakeDataSource.getReminder(reminderData.id)
+            val errorResult = reminderPastResult as Result.Error
+            assertThat(reminderPastResult, `is`(errorResult))
 
+        }
 
     private fun buildReminderData() = ReminderDataItem(
         "someTitle",
