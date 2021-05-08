@@ -4,17 +4,13 @@ import android.os.Build
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.common.base.Strings.isNullOrEmpty
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.rule.MainCoroutineRule
-import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import net.bytebuddy.matcher.ElementMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.equalTo
-import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -70,19 +66,61 @@ class RemindersListViewModelTest {
 
 
     @Test
-    fun loadReminders_whenNoRemindersAreStored_ReturnError() =
+    fun loadReminders_whenAllRemindersAreDeleted_thenCallLoadReminder_ReturnEmpty() =
+        mainCoroutineRule.runBlockingTest {
+
+            //Given
+            fakeDataSource.deleteAllReminders()
+
+
+
+            reminderListViewModel.loadReminders()
+
+
+            //When
+            val reminderList = reminderListViewModel.remindersList.value
+            val reminderMessage = reminderListViewModel.showSnackBar.value
+
+            //Then
+            assertThat(reminderMessage, `is`(nullValue()))
+            assertThat(reminderList, hasSize(equalTo(0)))
+
+        }
+
+    @Test
+    fun invalidateShowNoData_whenNoDatainReminderList_returnShowNoDataMessageTrue() =
         mainCoroutineRule.runBlockingTest {
 
             //Given
             fakeDataSource.deleteAllReminders()
             reminderListViewModel.loadReminders()
 
-
             //When
             val reminderList = reminderListViewModel.remindersList.value
+            val noData = reminderListViewModel.showNoData.value
 
             //Then
-            assertThat(reminderList, hasSize(equalTo(0))  )
+            assertThat(reminderList, hasSize(equalTo(0)))
+            assertThat(noData, `is`(true))
+
+        }
+
+    @Test
+    fun invalidateShowNoData_whenNoDataInReminderList_returnShowNoDataMessageFalse() =
+        mainCoroutineRule.runBlockingTest {
+
+            //Given
+            fakeDataSource.deleteAllReminders()
+            fakeDataSource.saveReminder(buildInvalidateReminderDataItem())
+
+
+
+            //When
+            reminderListViewModel.loadReminders()
+            val noData = reminderListViewModel.showNoData.value
+
+            //Then
+            assertThat(noData, `is`(false))
 
         }
 
@@ -109,4 +147,12 @@ class RemindersListViewModelTest {
             -96.796989
         )
     )
+
+    private fun buildInvalidateReminderDataItem() =
+        ReminderDTO(
+            null, null, null, null, null
+
+
+        )
+
 }
