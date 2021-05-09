@@ -54,4 +54,5 @@
     <string name="geofence_broadcast_error">Geofence broadcast error</string>
     <string name="geoservice_error">Geofence Transition Job Intent Service Error</string>
     <string name="title_detail">Geofencing</string>
+    <string name="sometitle">sometitle</string>
 </resources>
