@@ -8,6 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
+import com.udacity.project4.locationreminders.data.dto.succeeded
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -58,23 +59,24 @@ class RemindersLocalRepositoryTest {
 
     @Test
     //subjectUnderTest_actionOrInput_resultState
-    fun getReminders_whenSuccess_returnListOfReminders() =  runBlocking(){
+    fun getReminders_whenSuccess_returnListOfReminders() = runBlocking() {
 
-            //Given
-            reminderLocalRepo.saveReminder(buildReminder())
-            reminderLocalRepo.saveReminder(buildReminder())
+        //Given
+        reminderLocalRepo.saveReminder(buildReminder())
+        reminderLocalRepo.saveReminder(buildReminder())
 
 
-
-            //When
-            val results = reminderLocalRepo.getReminders()
-            val  reminderList = results as Result.Success
+        //When
+        val results = reminderLocalRepo.getReminders()
 
 
         //Then
-            assertThat(reminderList, not(emptyArray<ReminderDTO>()))
-            assertThat(reminderList.data, hasSize(greaterThanOrEqualTo(1)))
-        }
+        assertThat(results.succeeded, `is`(true))
+        val reminderList = results as Result.Success
+
+        assertThat(reminderList, not(emptyArray<ReminderDTO>()))
+        assertThat(reminderList.data, hasSize(greaterThanOrEqualTo(1)))
+    }
 
 
     @Test
@@ -88,10 +90,11 @@ class RemindersLocalRepositoryTest {
         //When
         reminderLocalRepo.saveReminder(reminder)
         val reminderRecord = reminderLocalRepo.getReminder(reminder.id)
-        reminderRecord as Result.Success
 
         //Then
-        assertThat(reminder.id, `is`(reminderRecord.data.id) )
+        assertThat(reminderRecord.succeeded, `is`(true))
+        reminderRecord as Result.Success
+        assertThat(reminder.id, `is`(reminderRecord.data.id))
     }
 
 
@@ -108,9 +111,11 @@ class RemindersLocalRepositoryTest {
         reminderLocalRepo.deleteAllReminders()
 
         val reminderRecord = reminderLocalRepo.getReminder(reminder.id)
-        reminderRecord as Result.Error
 
         //Then
+        assertThat(reminderRecord.succeeded, `is`(false))
+        reminderRecord as Result.Error
+
         assertThat(reminderRecord.message, `is`("Reminder not found!"))
 
 
@@ -119,7 +124,7 @@ class RemindersLocalRepositoryTest {
 
     @Test
     //subjectUnderTest_actionOrInput_resultState
-    fun getReminder_whenReminderInserted_returnReminder() = runBlocking{
+    fun getReminder_whenReminderInserted_returnReminder() = runBlocking {
 
         //Given
         val reminder = buildReminder()
@@ -178,10 +183,10 @@ class RemindersLocalRepositoryTest {
 
 
     private fun buildReminder() = ReminderDTO(
-            "sometitle",
-            "someDescription",
-            "someLocation",
-            36.94593,
-            -35.67789
-        )
+        "sometitle",
+        "someDescription",
+        "someLocation",
+        36.94593,
+        -35.67789
+    )
 }

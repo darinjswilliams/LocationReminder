@@ -55,4 +55,5 @@
     <string name="geoservice_error">Geofence Transition Job Intent Service Error</string>
     <string name="title_detail">Geofencing</string>
     <string name="sometitle">sometitle</string>
+    <string name="reminder_not_found">Reminder not found!</string>
 </resources>
