@@ -2,9 +2,11 @@ package com.udacity.project4.locationreminders.reminderslist
 
 import android.app.Application
 import android.os.Bundle
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
@@ -14,14 +16,15 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import com.udacity.project4.R
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
-import com.udacity.project4.locationreminders.data.local.FakeDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
-import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
+import com.udacity.project4.locationreminders.data.local.RemindersDatabase
+import com.udacity.project4.locationreminders.repo.FakeAndroidRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
@@ -30,6 +33,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.KoinTest
+import org.koin.test.inject
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 
@@ -38,17 +42,18 @@ import org.mockito.Mockito.verify
 @ExperimentalCoroutinesApi
 //UI Testing
 @MediumTest
-class ReminderListFragmentTest: KoinTest {
+class ReminderListFragmentTest : KoinTest {
 
     //    TODO: test the navigation of the fragments.
 //    TODO: test the displayed data on the UI.
 //    TODO: add testing for the error messages.
 
-    private lateinit var reminderRepo: FakeDataSource
+    @get:Rule
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private lateinit var applicationContext: Application
 
-    private lateinit var reminderDataSource: FakeDataSource
+    private val reminderFakeRep: FakeAndroidRepository by inject()
 
 
     @Before
@@ -56,42 +61,48 @@ class ReminderListFragmentTest: KoinTest {
         stopKoin()
 
         applicationContext = getApplicationContext()
-        reminderRepo = FakeDataSource()
-        reminderDataSource = FakeDataSource()
 
 
         val reminderModule = module {
             viewModel {
-                RemindersListViewModel(applicationContext, reminderRepo)
+                RemindersListViewModel(applicationContext, get() as FakeAndroidRepository)
             }
 
-            single{ SaveReminderViewModel(applicationContext, reminderRepo) }
-            single { FakeDataSource() }
+            single {
+                Room.inMemoryDatabaseBuilder(
+                    get(),
+                    RemindersDatabase::class.java
+                )
+                    .allowMainThreadQueries()
+                    .build()
+            }
+
+            single { FakeAndroidRepository() }
             single { LocalDB.createRemindersDao(applicationContext) }
         }
 
 
-        startKoin {  androidContext(applicationContext)
-        modules(listOf(reminderModule)) }
-
-        runBlockingTest {
-            reminderRepo.deleteAllReminders()
+        startKoin {
+            androidContext(applicationContext)
+            modules(listOf(reminderModule))
         }
 
     }
 
     @After
     fun tearDown() {
+        runBlockingTest {
+            reminderFakeRep.deleteAllReminders()
+        }
         stopKoin()
     }
 
     //TODO Create ServiceLocator Pattern
     @Test
-    fun reminderList_DisplayInUi() = runBlocking<Unit>{
+    fun reminderList_DisplayInUi() = runBlocking<Unit> {
 
         //Given
-        reminderRepo.saveReminder(buildReminder())
-        reminderRepo.saveReminder(buildAnotherReminder())
+        reminderFakeRep.insertReminders(buildReminderData())
 
 
         //When
@@ -99,8 +110,10 @@ class ReminderListFragmentTest: KoinTest {
 
 
         //Then - Expresso
-        onView(withText("SomeDescription")).check(matches(isDisplayed()))
-        onView(withText("SomeLocationB")).check(matches(isDisplayed()))
+        onView(withText("someTitleA")).check(matches(isDisplayed()))
+        onView(withText("someTitleD")).check(matches(isDisplayed()))
+        onView(withText("someDescriptionB")).check(matches(isDisplayed()))
+        onView(withText("someLocationC")).check(matches(isDisplayed()))
     }
 
     @Test
@@ -116,13 +129,13 @@ class ReminderListFragmentTest: KoinTest {
 
     @Test
     //subjectUnderTest_actionOrInput_resultState
-    fun onFAButton_whenClicked_navigateToSaveReminder() {
+    fun onFAButton_whenClicked_navigateToSaveReminder() = runBlockingTest {
         //Given
+        val scenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
 
         //Then
-        val navController =  mock(NavController::class.java)
+        val navController = mock(NavController::class.java)
 
-        val scenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
 
         scenario.onFragment {
             Navigation.setViewNavController(it.view!!, navController)
@@ -136,19 +149,27 @@ class ReminderListFragmentTest: KoinTest {
 
     }
 
-    private fun buildReminder() = ReminderDTO(
-        "SomeTitle",
-        "SomeDescription",
-        "SomeLocation",
-        36.94593,
-        -35.67789
-    )
+    private fun buildReminderData() = arrayListOf(
+        ReminderDTO(
+            "someTitleA",
+            "someDescriptionA", "someLocationA", 32.776665,
+            -96.796989
+        ),
+        ReminderDTO(
+            "someTitleB",
+            "someDescriptionB", "someLocationB", 32.776665,
+            -96.796989
 
-    private fun buildAnotherReminder() = ReminderDTO(
-        "SomeTitleB",
-        "SomeDescriptionA",
-        "SomeLocationA",
-        36.9459368,
-        -35.6778934
+        ),
+        ReminderDTO(
+            "someTitleC",
+            "someDescriptionC", "someLocationC", 32.776665,
+            -96.796989
+        ),
+        ReminderDTO(
+            "someTitleD",
+            "someDescriptionD", "someLocationD", 32.776665,
+            -96.796989
+        )
     )
 }
