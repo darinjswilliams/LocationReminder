@@ -128,12 +128,11 @@ class ReminderListFragmentTest : KoinTest {
     }
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun onFAButton_whenClicked_navigateToSaveReminder() = runBlockingTest {
         //Given
         val scenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
 
-        //Then
+
         val navController = mock(NavController::class.java)
 
 
@@ -144,7 +143,7 @@ class ReminderListFragmentTest : KoinTest {
         //When - click fab
         onView(withId(R.id.addReminderFAB)).perform(click())
 
-        //CORRECT NAVIGATION METHOD IS CALLED.
+        //Then
         verify(navController).navigate(ReminderListFragmentDirections.toSaveReminder())
 
     }

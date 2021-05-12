@@ -1,22 +1,19 @@
 package com.udacity.project4.locationreminders.repo
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
 import com.udacity.project4.locationreminders.data.ReminderDataSource
-
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 class FakeAndroidRepository : ReminderDataSource {
 
     var remindersServiceData: LinkedHashMap<String, ReminderDTO> = LinkedHashMap()
 
     private var shouldReturnError = false
-
-    private val TAG = "FakeAndroidTestRepo"
 
     private val observableReminders = MutableLiveData<Result<List<ReminderDTO>>>()
 
@@ -60,7 +57,7 @@ class FakeAndroidRepository : ReminderDataSource {
 
     override suspend fun saveReminder(reminder: ReminderDTO) {
         remindersServiceData[reminder.id] = reminder
-        Log.d(TAG, "${remindersServiceData[reminder.id]}")
+        Timber.i("${remindersServiceData[reminder.id]}")
     }
 
     override suspend fun getReminder(id: String): Result<ReminderDTO> {
