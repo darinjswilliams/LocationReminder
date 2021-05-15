@@ -75,9 +75,6 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    //            TODO: use the user entered reminder details to:
-    //             1) add a geofencing request
-    //             2) save the reminder to the local db
     private fun saveReminderViewModel() {
         val title = _viewModel.reminderTitle.value
         val description = _viewModel.reminderDescription.value

@@ -10,6 +10,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -20,6 +21,7 @@ import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersDatabase
+import com.udacity.project4.locationreminders.reminderslist.ReminderListFragmentDirections
 import com.udacity.project4.locationreminders.repo.FakeAndroidRepository
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
@@ -87,14 +89,42 @@ class SaveReminderFragmentTest : KoinTest {
 
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
-    fun onClickSelection_navigateToSelectionFragment() = runBlockingTest {
+    fun saveReminderFaB_whenClick_saveViewModelAndValidate() = runBlockingTest {
 
         //Given
+
         val scenario = launchFragmentInContainer<SaveReminderFragment>(Bundle(), R.style.AppTheme)
 
         val navController = mock(NavController::class.java)
-        val mockNavCmd = mock(BaseFragment::class.java)
+
+        //When
+        scenario.onFragment {
+            Navigation.setViewNavController(it.view!!, navController)
+        }
+
+
+        //Then
+        onView(withId(R.id.reminderTitle)).perform(
+            ViewActions.typeText("someTitleD"))
+
+        onView(withId(R.id.reminderDescription)).perform(
+                ViewActions.typeText("someDescription"))
+
+
+        onView(withId(R.id.selectLocation)).perform(click())
+
+        verify(navController).navigate(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
+
+    }
+
+
+    @Test
+    fun reminderLocation_whenOnClick_NavigateToSelectionLocationFragment() = runBlockingTest {
+
+        // GIVEN - On the home screen
+        val scenario = launchFragmentInContainer<SaveReminderFragment>(Bundle(), R.style.AppTheme)
+
+        val navController = mock(NavController::class.java)
 
         scenario.onFragment {
             Navigation.setViewNavController(it.view!!, navController)
@@ -103,40 +133,9 @@ class SaveReminderFragmentTest : KoinTest {
         //When
         onView(withId(R.id.selectLocation)).perform(click())
 
-        //Then
-        verify(navController).navigate(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
-        verify(mockNavCmd).findNavController()
-            .navigate(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
-    }
-
-
-    @Test
-    //subjectUnderTest_actionOrInput_resultState
-    fun saveReminder_whenReminderLocation_isClicked() = runBlockingTest {
-
-        //Given
-
-        val reminder  = buildReminder()
-
-        reminderFakeRep.saveReminder(buildReminder())
-
-        val reminderId = reminderFakeRep.getReminder(reminder.id)
-
-
-        val scenario = launchFragmentInContainer<SaveReminderFragment>(Bundle(), R.style.AppTheme)
-
-        val navController = mock(NavController::class.java)
-
-        scenario.onFragment {
-            Navigation.setViewNavController(it.view!!, navController)
-        }
-
-        //When
-        onView(withId(R.id.saveReminder)).perform(click())
-
 
         //Then
-       onView(withId(R.id.reminderTitle)).check(matches(withText("Description")))
+       verify(navController).navigate(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
 
     }
 

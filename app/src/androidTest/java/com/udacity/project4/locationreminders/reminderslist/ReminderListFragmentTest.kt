@@ -97,7 +97,6 @@ class ReminderListFragmentTest : KoinTest {
         stopKoin()
     }
 
-    //TODO Create ServiceLocator Pattern
     @Test
     fun reminderList_DisplayInUi() = runBlocking<Unit> {
 
