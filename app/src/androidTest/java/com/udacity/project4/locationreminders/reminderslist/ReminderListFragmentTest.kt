@@ -44,10 +44,6 @@ import org.mockito.Mockito.verify
 @MediumTest
 class ReminderListFragmentTest : KoinTest {
 
-    //    TODO: test the navigation of the fragments.
-//    TODO: test the displayed data on the UI.
-//    TODO: add testing for the error messages.
-
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
@@ -116,13 +112,15 @@ class ReminderListFragmentTest : KoinTest {
     }
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
-    fun reminderList_whenNoRemindersSaved_DisplayNoData() {
+    fun reminderList_whenNoData_DisplayNoData() {
         //When
         launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
 
-        //Then - Expresso
-        onView(withText("No Data")).check(matches(isDisplayed()))
+        //Then - Check that the recyclerview has no data
+        onView(withId(R.id.reminderssRecyclerView))
+            .check(matches(hasChildCount(0)));
+
+        onView(withId(R.id.noDataTextView)).check(matches(withText("No Data")))
 
     }
 
@@ -144,6 +142,26 @@ class ReminderListFragmentTest : KoinTest {
 
         //Then
         verify(navController).navigate(ReminderListFragmentDirections.toSaveReminder())
+
+    }
+
+    @Test
+    fun reminderList_whenErrorMessage_returnErrorDisplayed() = runBlockingTest {
+
+        //Given
+        val scenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
+        val navController = mock(NavController::class.java)
+
+        scenario.onFragment {
+            Navigation.setViewNavController(it.view!!, navController)
+        }
+
+        //When
+        reminderFakeRep.saveReminder(buildReminder())
+        val reminders = reminderFakeRep.getReminders()
+
+        onView(withId(R.id.refreshLayout)).check(matches(withText("succeed")))
+
 
     }
 
@@ -170,4 +188,13 @@ class ReminderListFragmentTest : KoinTest {
             -96.796989
         )
     )
+
+
+    private fun buildReminder() = ReminderDTO(
+        "someTitleD",
+        "someDescriptionD", "someLocationD", 32.776665,
+        -96.796989
+    )
+
+
 }

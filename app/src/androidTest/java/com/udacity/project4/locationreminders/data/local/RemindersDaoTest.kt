@@ -24,8 +24,6 @@ import java.util.*
 @SmallTest
 class RemindersDaoTest {
 
-//    TODO: Add testing implementation to the RemindersDao.kt
-
     //Since your testing Architecture components
     //This will execute each task synchronsously
     @get:Rule
@@ -45,7 +43,6 @@ class RemindersDaoTest {
     fun closeDb() = database.close()
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun saveReminder_whenReminderIsPopulated_thenInsertIntoDatabase() = runBlockingTest {
 
         //Given
@@ -69,7 +66,6 @@ class RemindersDaoTest {
     }
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun getReminders_whenNoReminderIdisProvided_returnListOfReminders() = runBlockingTest {
 
 
@@ -90,7 +86,6 @@ class RemindersDaoTest {
 
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun getReminderById_whenReminderIsSave_thenReturnSaveReminderWithSameId() = runBlockingTest {
 
         //Given
@@ -115,7 +110,6 @@ class RemindersDaoTest {
 
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun deleteAllReminders_whenAllReminderItemsAreDeleted_returnEmptyList() = runBlockingTest {
 
         //Given

@@ -6,22 +6,18 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
-import androidx.navigation.fragment.findNavController
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.withId
-import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.filters.MediumTest
 import com.udacity.project4.R
-import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersDatabase
-import com.udacity.project4.locationreminders.reminderslist.ReminderListFragmentDirections
 import com.udacity.project4.locationreminders.repo.FakeAndroidRepository
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
@@ -139,6 +135,26 @@ class SaveReminderFragmentTest : KoinTest {
 
     }
 
+
+    @Test
+    fun snackBarNoTitle_whenClickingSaveReminder_returnDisplayTitleSnackBarMessage() = runBlockingTest {
+        // GIVEN - On the home screen
+        val scenario = launchFragmentInContainer<SaveReminderFragment>(Bundle(), R.style.AppTheme)
+
+        val navController = mock(NavController::class.java)
+
+        scenario.onFragment {
+            Navigation.setViewNavController(it.view!!, navController)
+        }
+
+        //When
+        onView(withId(R.id.saveReminder)).perform(click())
+
+
+        //Then
+        onView(withText("Please enter title")).check(matches(isDisplayed()))
+
+    }
 
     private fun buildReminder() = ReminderDTO(
         "someTitleD",

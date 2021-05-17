@@ -75,7 +75,6 @@ class ReminderListFragment : BaseFragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.logout -> {
-//                TODO: add the logout implementation
                 Timber.i("Logout Button Pressed")
                 AuthUI.getInstance().signOut(requireContext())
                     .addOnCompleteListener {

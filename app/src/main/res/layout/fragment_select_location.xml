@@ -14,7 +14,6 @@
         android:id="@+id/constraintLayoutMaps"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <!--TODO: Add the map fragment for the user to select the location-->
 
         <androidx.fragment.app.FragmentContainerView
             android:layout_width="match_parent"

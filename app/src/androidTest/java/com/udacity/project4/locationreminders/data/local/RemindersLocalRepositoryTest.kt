@@ -31,8 +31,6 @@ import org.robolectric.annotation.Config
 @MediumTest
 class RemindersLocalRepositoryTest {
 
-    //    TODO: Add testing implementation to the RemindersLocalRepository.kt
-
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
 
@@ -58,7 +56,6 @@ class RemindersLocalRepositoryTest {
 
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun getReminders_whenSuccess_returnListOfReminders() = runBlocking() {
 
         //Given
@@ -99,7 +96,6 @@ class RemindersLocalRepositoryTest {
 
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun deleteReminders_whenRemindersAreDelete_returnReminderNotFoundMessage() = runBlocking {
 
         //Given
@@ -123,7 +119,6 @@ class RemindersLocalRepositoryTest {
 
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun getReminder_whenReminderInserted_returnReminder() = runBlocking {
 
         //Given

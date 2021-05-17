@@ -45,11 +45,7 @@ class SaveReminderViewModelTest {
         stopKoin()
     }
 
-    //TODO: provide testing to the SaveReminderView and its live data objects
-    //TODO: write test for validateAndSaveReminder, saveReminder, validateEnteredData, onClear
-
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun validateAndSaveReminder_whenAllFieldsArePopulated_returnSaveReminder() =
         mainCoroutineRule.runBlockingTest {
 
@@ -78,7 +74,6 @@ class SaveReminderViewModelTest {
 
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun saveReminder_whenGivenValidReminderItem_thenSaveReminderItemReturnTrue() =
         mainCoroutineRule.runBlockingTest {
 
@@ -103,7 +98,6 @@ class SaveReminderViewModelTest {
 
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun saveReminder_whenReminderItemIsNotValid_thenReturnFalse() =
         mainCoroutineRule.runBlockingTest {
 
@@ -120,7 +114,6 @@ class SaveReminderViewModelTest {
         }
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun validateEnteredData_whenReminderItemIsValid_returnTrue() {
         //Given
         val reminderData = buildReminderData()
@@ -135,7 +128,6 @@ class SaveReminderViewModelTest {
     }
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun validateEnteredData_whenReminderItemsNotValid_returnFalse() {
         //Given
         val reminderData = buildReminderData()
@@ -149,7 +141,6 @@ class SaveReminderViewModelTest {
     }
 
     @Test
-    //subjectUnderTest_actionOrInput_resultState
     fun onClear_whenReminderObjectIsSave_returnClearReminderItemOnNextSave() =
         mainCoroutineRule.runBlockingTest {
 
@@ -176,6 +167,7 @@ class SaveReminderViewModelTest {
             assertThat(reminderPastResult, `is`(errorResult))
 
         }
+
 
     private fun buildReminderData() = ReminderDataItem(
         "someTitle",
