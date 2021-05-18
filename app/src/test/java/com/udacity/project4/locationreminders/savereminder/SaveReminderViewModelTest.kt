@@ -74,7 +74,7 @@ class SaveReminderViewModelTest {
 
 
     @Test
-    fun saveReminder_whenGivenValidReminderItem_thenSaveReminderItemReturnTrue() =
+    fun saveReminderResultSucess_whenGivenValidReminderItem_thenReturnSuccessMessage() =
         mainCoroutineRule.runBlockingTest {
 
             //Given
@@ -96,22 +96,29 @@ class SaveReminderViewModelTest {
             )
         }
 
-
     @Test
-    fun saveReminder_whenReminderItemIsNotValid_thenReturnFalse() =
-        mainCoroutineRule.runBlockingTest {
+    fun saveReminderResultFalse_whenGivenInValidReminderId_thenReturnReminderNotFoundMessage() = runBlockingTest {
+        //Given
+        var reminderData = buildReminderData()
 
-            //Given
-            val reminderData = buildReminderData()
+        //When
+        val saveReminderResult = saveReminderViewModel.validateEnteredData(reminderData)
+        assertThat(saveReminderResult, `is`(true))
 
-            reminderData.title = null
+        //Then
+        reminderData.id = "17"
 
-            //When
-            val saveReminderResult = saveReminderViewModel.validateEnteredData(reminderData)
+        val reminderResult = fakeDataSource.getReminder(reminderData.id)
+        reminderResult as Result.Error
 
-            //Then
-            assertThat(saveReminderResult, `is`(false))
-        }
+
+        assertThat(reminderResult.message, `is`(equalTo("Reminder Not Found for " + reminderData.id)))
+
+        assertThat(
+            saveReminderViewModel.showToast.value,
+            `is`(equalTo(null))
+        )
+    }
 
     @Test
     fun validateEnteredData_whenReminderItemIsValid_returnTrue() {
@@ -128,7 +135,7 @@ class SaveReminderViewModelTest {
     }
 
     @Test
-    fun validateEnteredData_whenReminderItemsNotValid_returnFalse() {
+    fun validateTitle_whenReminderTileIsEmpty_returnFalse() {
         //Given
         val reminderData = buildReminderData()
         reminderData.title = null
@@ -138,6 +145,20 @@ class SaveReminderViewModelTest {
 
         //Then
         assertThat(saveReminderResult, `is`(false))
+    }
+
+    @Test
+    fun validateLocation_whenReminderLocationIsEmpty_returnFalse() {
+
+        val reminderData = buildReminderData()
+        reminderData.location = null
+
+        //When
+        val saveReminderResult = saveReminderViewModel.validateEnteredData(reminderData)
+
+        //Then
+        assertThat(saveReminderResult, `is`(false))
+
     }
 
     @Test

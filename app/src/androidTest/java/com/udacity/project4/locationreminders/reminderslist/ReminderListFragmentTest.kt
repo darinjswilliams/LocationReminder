@@ -16,12 +16,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import com.udacity.project4.R
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
+import com.udacity.project4.locationreminders.data.dto.Result
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersDatabase
 import com.udacity.project4.locationreminders.repo.FakeAndroidRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
+import org.hamcrest.core.Is.`is`
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -94,7 +95,7 @@ class ReminderListFragmentTest : KoinTest {
     }
 
     @Test
-    fun reminderList_DisplayInUi() = runBlocking<Unit> {
+    fun reminderList_DisplayInUi() {
 
         //Given
         reminderFakeRep.insertReminders(buildReminderData())
@@ -146,9 +147,11 @@ class ReminderListFragmentTest : KoinTest {
     }
 
     @Test
-    fun reminderList_whenErrorMessage_returnErrorDisplayed() = runBlockingTest {
+    fun reminderList_whenErrorMessage_returnErrorDisplayed() = runBlockingTest{
 
         //Given
+        reminderFakeRep.setReturnError(true)
+
         val scenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
         val navController = mock(NavController::class.java)
 
@@ -158,9 +161,13 @@ class ReminderListFragmentTest : KoinTest {
 
         //When
         reminderFakeRep.saveReminder(buildReminder())
-        val reminders = reminderFakeRep.getReminders()
 
-        onView(withId(R.id.refreshLayout)).check(matches(withText("succeed")))
+        val reminders = reminderFakeRep.getReminders()
+        reminders as Result.Error
+
+        //Then
+        assertThat(reminders.message, `is`("Test exception"))
+        onView(withText(reminders.message)).check(matches(withText("Test exception")))
 
 
     }
