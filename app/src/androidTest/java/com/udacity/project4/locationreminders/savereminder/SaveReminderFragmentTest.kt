@@ -31,7 +31,6 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.KoinTest
-import org.koin.test.inject
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.junit.MockitoJUnitRunner
@@ -42,8 +41,6 @@ class SaveReminderFragmentTest : KoinTest {
 
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
-
-    private val reminderFakeRep: FakeAndroidRepository by inject()
 
     private lateinit var applicationContext: Application
 
