@@ -124,17 +124,13 @@ class RemindersActivityTest :
         val reminder = buildReminder()
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
 
-
         //When
         repository.saveReminder(reminder)
         dataBindingIdlingResource.monitorActivity(activityScenario)
 
-
         //Then
         onView(withText(reminder.title)).check(matches(isDisplayed()))
         onView(withText(reminder.description)).check(matches(isDisplayed()))
-
-
         activityScenario.close()
     }
 
@@ -169,11 +165,8 @@ class RemindersActivityTest :
         onView(withId(R.id.save_button)).perform(click())
 
         onView(withText("Custom Location Indicated")).check(matches(isDisplayed()))
-
         onView(withId(R.id.saveReminder)).perform(click())
-
         activityScenario.close()
-
     }
 
 

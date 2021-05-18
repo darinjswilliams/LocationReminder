@@ -89,7 +89,6 @@ class SaveReminderViewModelTest {
             val reminderResult = fakeDataSource.getReminder(reminderData.id)
             reminderResult as Result.Success
 
-
             assertThat(
                 saveReminderViewModel.showToast.value,
                 `is`(equalTo("Reminder Saved !"))
@@ -128,10 +127,8 @@ class SaveReminderViewModelTest {
         //When
         val saveReminderResult = saveReminderViewModel.validateEnteredData(reminderData)
 
-
         //Then
         assertThat(saveReminderResult, `is`(true))
-
     }
 
     @Test

@@ -53,13 +53,11 @@ class RemindersListViewModelTest {
             //Given
             reminderListViewModel.loadReminders()
 
-
             //When
             val reminderList = reminderListViewModel.remindersList.value
 
             //Then
             assertThat(reminderList, hasSize(equalTo(4)))
-
         }
 
 
@@ -69,11 +67,7 @@ class RemindersListViewModelTest {
 
             //Given
             fakeDataSource.deleteAllReminders()
-
-
-
             reminderListViewModel.loadReminders()
-
 
             //When
             val reminderList = reminderListViewModel.remindersList.value
@@ -82,7 +76,6 @@ class RemindersListViewModelTest {
             //Then
             assertThat(reminderMessage, `is`(nullValue()))
             assertThat(reminderList, hasSize(equalTo(0)))
-
         }
 
     @Test
@@ -100,7 +93,6 @@ class RemindersListViewModelTest {
             //Then
             assertThat(reminderList, hasSize(equalTo(0)))
             assertThat(noData, `is`(true))
-
         }
 
     @Test
@@ -111,15 +103,12 @@ class RemindersListViewModelTest {
             fakeDataSource.deleteAllReminders()
             fakeDataSource.saveReminder(buildInvalidateReminderDataItem())
 
-
-
             //When
             reminderListViewModel.loadReminders()
             val noData = reminderListViewModel.showNoData.value
 
             //Then
             assertThat(noData, `is`(false))
-
         }
 
     private fun buildReminderData() = arrayListOf(
@@ -149,8 +138,6 @@ class RemindersListViewModelTest {
     private fun buildInvalidateReminderDataItem() =
         ReminderDTO(
             null, null, null, null, null
-
-
         )
 
 }

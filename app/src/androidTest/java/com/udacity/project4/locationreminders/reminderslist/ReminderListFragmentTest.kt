@@ -100,7 +100,6 @@ class ReminderListFragmentTest : KoinTest {
         //Given
         reminderFakeRep.insertReminders(buildReminderData())
 
-
         //When
         launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
 
