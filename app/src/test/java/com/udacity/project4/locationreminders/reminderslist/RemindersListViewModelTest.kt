@@ -47,17 +47,39 @@ class RemindersListViewModelTest {
     }
 
     @Test
+    fun loadReminder_showLoading_whenLoadingData_returnTrue_afterLoadingData_returnFalse() {
+        // Pause dispatcher so you can verify initial values.
+        mainCoroutineRule.pauseDispatcher()
+
+        //load the data
+        reminderListViewModel.loadReminders()
+
+        // Then assert that the progress indicator is shown.
+        assertThat(reminderListViewModel.showLoading.value, `is`(true))
+
+        // Execute pending coroutines actions.
+        mainCoroutineRule.resumeDispatcher()
+
+        // Then assert that the progress indicator is shown.
+        assertThat(reminderListViewModel.showLoading.value, `is`(false))
+
+
+    }
+
+    @Test
     fun loadReminders_addToReminderList_returnPopulateList() =
         mainCoroutineRule.runBlockingTest {
 
             //Given
             reminderListViewModel.loadReminders()
 
+
             //When
             val reminderList = reminderListViewModel.remindersList.value
 
             //Then
             assertThat(reminderList, hasSize(equalTo(4)))
+
         }
 
 
@@ -67,6 +89,9 @@ class RemindersListViewModelTest {
 
             //Given
             fakeDataSource.deleteAllReminders()
+
+
+
             reminderListViewModel.loadReminders()
 
             //When
@@ -102,6 +127,7 @@ class RemindersListViewModelTest {
             //Given
             fakeDataSource.deleteAllReminders()
             fakeDataSource.saveReminder(buildInvalidateReminderDataItem())
+
 
             //When
             reminderListViewModel.loadReminders()

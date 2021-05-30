@@ -20,6 +20,7 @@ import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
+import com.udacity.project4.utils.foregroundAndBackgroundLocationPermissionApproved
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 import timber.log.Timber
@@ -32,6 +33,7 @@ class SaveReminderFragment : BaseFragment() {
         private const val ACTION_GEOFENCE_EVENT =
             "SaveReminderFragment.locationreminders.action.ACTIONGEOFENCE_EVENT"
     }
+
     //Get the view model this time as a single to be shared with the another fragment
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSaveReminderBinding
@@ -90,7 +92,16 @@ class SaveReminderFragment : BaseFragment() {
         _viewModel.validateAndSaveReminder(reminderDataItem)
 
         if (latitude != null && longitude != null && !TextUtils.isEmpty(title) && !isDetached) {
-            addGeoFenceReference(LatLng(latitude, longitude), GEOFENCE_RADIUS, reminderDataItem.id)
+
+            //Check location permission corresponding location permissions (foreground and background permissions)
+            //Check to see if location is enable before adding geoFence
+                if(foregroundAndBackgroundLocationPermissionApproved(requireContext())) {
+                    addGeoFenceReference(
+                        LatLng(latitude, longitude),
+                        GEOFENCE_RADIUS,
+                        reminderDataItem.id
+                    )
+                }
         }
 
     }

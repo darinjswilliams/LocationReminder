@@ -1,6 +1,7 @@
 package com.udacity.project4.locationreminders.savereminder.selectreminderlocation
 
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.IntentSender
@@ -11,6 +12,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.*
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.library.BuildConfig
 import androidx.navigation.fragment.findNavController
@@ -62,6 +66,24 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    //suppress permission check
+
+    @SuppressLint("MissingPermission")
+    private val requestPermissionLauncher =
+
+    registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true  &&
+            permissions[Manifest.permission.ACCESS_BACKGROUND_LOCATION] == true){
+
+            Timber.i("Permissions Granted")
+
+        } else {
+
+            Timber.i("Permissions Denied")
+
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -154,20 +176,90 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
-    @SuppressLint("MissingPermission", "NewApi")
+
+//    @SuppressLint("MissingPermission")
     private fun enableMyLocation() {
-        if (foregroundAndBackgroundLocationPermissionApproved(requireActivity())) {
-            map.isMyLocationEnabled = true
-            map.uiSettings.isMyLocationButtonEnabled = true
 
-            Timber.i("ForegroundAndBackgroundLocationPermissionApproved")
-            checkDeviceLocationSettingsAndStartGeofence()
+     if(checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ) {
 
-        } else {
-                Timber.i("RequestForegroundAndBackgroundLocationPermissions")
-            context?.let { requestForegroundAndBackgroundLocationPermissions(it) }
-            checkDeviceLocationSettingsAndStartGeofence()
-        }
+         map.isMyLocationEnabled = true
+         map.uiSettings.isMyLocationButtonEnabled = true
+
+         checkDeviceLocationSettingsAndStartGeofence()
+
+     } else {
+
+         if(shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ){
+             Toast.makeText(requireContext(),R.string.permission_denied_explanation, Toast.LENGTH_SHORT).show()
+         }
+
+         requestPermissionLauncher.launch( arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
+
+     }
+
+
+//        when {
+//            ContextCompat.checkSelfPermission(
+//                requireContext(),
+//                permission.ACCESS_FINE_LOCATION
+//            ) == PackageManager.PERMISSION_GRANTED -> {
+//                // You can use the API that requires the permission.
+//            }
+//            shouldShowRequestPermissionRationale(permission.ACCESS_BACKGROUND_LOCATION) -> {
+//            // In an educational UI, explain to the user why your app requires this
+//            // permission for a specific feature to behave as expected. In this UI,
+//            // include a "cancel" or "no thanks" button that allows the user to
+//            // continue using your app without granting the permission.
+//                map.isMyLocationEnabled = true
+//                map.uiSettings.isMyLocationButtonEnabled = true
+//                Timber.i("permission granted background")
+//
+//                checkDeviceLocationSettingsAndStartGeofence()
+//
+//        }
+//            else -> {
+//                // You can directly ask for the permission.
+//                // The registered ActivityResultCallback gets the result of this request.
+//                Timber.i("Permission Denied")
+//                requestPermissionLauncher.launch(
+//                    arrayOf(permission.ACCESS_FINE_LOCATION, permission.ACCESS_BACKGROUND_LOCATION)
+//                )
+//            }
+//        }
+
+
+//        if (isPermissionGranted(requireContext())) {
+//
+//            map.isMyLocationEnabled = true
+//            map.uiSettings.isMyLocationButtonEnabled = true
+//            checkPermissionsAndStartGeofencing()
+//            //TODO check device location
+//            Timber.i("ForegroundAndBackgroundLocationPermissionApproved")
+//
+//        } else {
+//            Timber.i("Permission Denied")
+//            Snackbar.make(
+//                binding.constraintLayoutMaps,
+//                R.string.permission_denied_explanation,
+//                Snackbar.LENGTH_INDEFINITE
+//            ).setAction(R.string.permission_ok){
+//                startActivity(Intent().apply {
+//                    action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+//                    data = Uri.fromParts("package", BuildConfig.LIBRARY_PACKAGE_NAME, null)
+//                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+//                })
+//            }.show()
+//
+//
+//
+//            Timber.i("RequestForegroundAndBackgroundLocationPermissions")
+//            ActivityCompat.requestPermissions(
+//                requireActivity(),
+//                arrayOf(permission.ACCESS_FINE_LOCATION),
+//                REQUEST_LOCATION_PERMISSION
+//            )
+//
+//        }
     }
 
 
@@ -191,9 +283,20 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             if (exception is ResolvableApiException && resolve) {
                 try {
 
+                    //Show location setting
                     exception.startResolutionForResult(
                         requireActivity(),
                         REQUEST_TURN_DEVICE_LOCATION_ON
+                    )
+
+                    startIntentSenderForResult(
+                        exception.resolution.intentSender,
+                        REQUEST_TURN_DEVICE_LOCATION_ON,
+                        null,
+                        0,
+                        0,
+                        0,
+                        null
                     )
 
                 } catch (sendEx: IntentSender.SendIntentException) {
@@ -308,6 +411,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     )
                 )
             }
+        }
+    }
+
+    private fun checkPermissionsAndStartGeofencing() {
+
+        if (foregroundAndBackgroundLocationPermissionApproved(requireContext())) {
+            checkDeviceLocationSettingsAndStartGeofence()
+        } else {
+            requestForegroundAndBackgroundLocationPermissions(requireContext())
         }
     }
 }

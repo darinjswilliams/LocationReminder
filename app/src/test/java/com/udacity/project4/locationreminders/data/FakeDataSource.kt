@@ -9,7 +9,7 @@ class FakeDataSource(var reminderServiceData: MutableList<ReminderDTO>? = mutabl
 
     override suspend fun getReminders(): Result<List<ReminderDTO>> {
         reminderServiceData?.let{ return Result.Success(ArrayList(it))}
-        return  Result.Error("no data")
+        return  Result.Error("Exception localize message")
     }
 
     override suspend fun saveReminder(reminder: ReminderDTO) {

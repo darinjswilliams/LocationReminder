@@ -4,12 +4,12 @@ import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
 
-class FakeDataSource (var reminderServiceData: MutableList<ReminderDTO>? = mutableListOf()) :
+class FakeDataSource(var reminderServiceData: MutableList<ReminderDTO>? = mutableListOf()) :
     ReminderDataSource {
 
     override suspend fun getReminders(): Result<List<ReminderDTO>> {
         reminderServiceData?.let{ return Result.Success(ArrayList(it))}
-        return  Result.Error("no data")
+        return  Result.Error("Exception localize message")
     }
 
     override suspend fun saveReminder(reminder: ReminderDTO) {
@@ -18,8 +18,8 @@ class FakeDataSource (var reminderServiceData: MutableList<ReminderDTO>? = mutab
 
     override suspend fun getReminder(id: String): Result<ReminderDTO> {
 
-        return when(val reminderItemFound = reminderServiceData?.find { it.id == id }){
-            null -> Result.Error("Reminder Not Found for $id")
+        return when (val reminderItemFound = reminderServiceData?.find { it.id == id }) {
+            null -> Result.Error("Reminder not found $id")
 
             else -> Result.Success(reminderItemFound)
         }
