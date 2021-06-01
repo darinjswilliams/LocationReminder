@@ -56,4 +56,5 @@
     <string name="sometitle">sometitle</string>
     <string name="reminder_not_found">Reminder not found!</string>
     <string name="permission_ok">Ok</string>
+    <string name="permission_rationale">All the time location permission required for location functionality</string>
 </resources>

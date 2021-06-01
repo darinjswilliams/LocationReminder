@@ -9,11 +9,12 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Location
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.*
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.library.BuildConfig
@@ -36,8 +37,6 @@ import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
-import com.udacity.project4.utils.foregroundAndBackgroundLocationPermissionApproved
-import com.udacity.project4.utils.requestForegroundAndBackgroundLocationPermissions
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 import timber.log.Timber
@@ -45,45 +44,25 @@ import timber.log.Timber
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     companion object {
-        private val REQUEST_LOCATION_PERMISSION = 1
+        private val REQUEST_LOCATION_PERMISSION_CODE = 25
         private const val DEFAULT_ZOOM = 15f
         private const val LOCATION_PERMISSION_INDEX = 0
-        private const val REQUEST_CODE_BACKGROUND = 201
         private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
-        private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
         private const val BACKROUND_LOCATION_PERMISSION_INDEX = 1
         private const val REQUEST_TURN_DEVICE_LOCATION_ON = 5
-
     }
+
+    val runningQOrLater = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
     private lateinit var lastKnownLocation: Location
-    private val runningQOrLater = android.os.Build.VERSION.SDK_INT >=
-            android.os.Build.VERSION_CODES.Q
 
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
-    //suppress permission check
-
-    @SuppressLint("MissingPermission")
-    private val requestPermissionLauncher =
-
-    registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true  &&
-            permissions[Manifest.permission.ACCESS_BACKGROUND_LOCATION] == true){
-
-            Timber.i("Permissions Granted")
-
-        } else {
-
-            Timber.i("Permissions Denied")
-
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -148,7 +127,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+        if (requestCode == REQUEST_LOCATION_PERMISSION_CODE) {
             if (grantResults.isEmpty() ||
                 (grantResults[LOCATION_PERMISSION_INDEX] ==
                         PackageManager.PERMISSION_DENIED) ||
@@ -157,7 +136,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         PackageManager.PERMISSION_DENIED)
             ) {
                 Snackbar.make(
-                    binding.constraintLayoutMaps,
+                    binding.map,
                     R.string.permission_denied_explanation,
                     Snackbar.LENGTH_INDEFINITE
                 )
@@ -177,89 +156,22 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
 
-//    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission")
     private fun enableMyLocation() {
 
-     if(checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ) {
+        if (!checkPermissions()) {
 
-         map.isMyLocationEnabled = true
-         map.uiSettings.isMyLocationButtonEnabled = true
+            Timber.i("Check Permission was granted")
+            requestPermissions()
 
-         checkDeviceLocationSettingsAndStartGeofence()
+            map.isMyLocationEnabled = true
+            map.uiSettings.isMyLocationButtonEnabled = true
 
-     } else {
-
-         if(shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ){
-             Toast.makeText(requireContext(),R.string.permission_denied_explanation, Toast.LENGTH_SHORT).show()
-         }
-
-         requestPermissionLauncher.launch( arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
-
-     }
+            checkDeviceLocationSettingsAndStartGeofence()
 
 
-//        when {
-//            ContextCompat.checkSelfPermission(
-//                requireContext(),
-//                permission.ACCESS_FINE_LOCATION
-//            ) == PackageManager.PERMISSION_GRANTED -> {
-//                // You can use the API that requires the permission.
-//            }
-//            shouldShowRequestPermissionRationale(permission.ACCESS_BACKGROUND_LOCATION) -> {
-//            // In an educational UI, explain to the user why your app requires this
-//            // permission for a specific feature to behave as expected. In this UI,
-//            // include a "cancel" or "no thanks" button that allows the user to
-//            // continue using your app without granting the permission.
-//                map.isMyLocationEnabled = true
-//                map.uiSettings.isMyLocationButtonEnabled = true
-//                Timber.i("permission granted background")
-//
-//                checkDeviceLocationSettingsAndStartGeofence()
-//
-//        }
-//            else -> {
-//                // You can directly ask for the permission.
-//                // The registered ActivityResultCallback gets the result of this request.
-//                Timber.i("Permission Denied")
-//                requestPermissionLauncher.launch(
-//                    arrayOf(permission.ACCESS_FINE_LOCATION, permission.ACCESS_BACKGROUND_LOCATION)
-//                )
-//            }
-//        }
+        }
 
-
-//        if (isPermissionGranted(requireContext())) {
-//
-//            map.isMyLocationEnabled = true
-//            map.uiSettings.isMyLocationButtonEnabled = true
-//            checkPermissionsAndStartGeofencing()
-//            //TODO check device location
-//            Timber.i("ForegroundAndBackgroundLocationPermissionApproved")
-//
-//        } else {
-//            Timber.i("Permission Denied")
-//            Snackbar.make(
-//                binding.constraintLayoutMaps,
-//                R.string.permission_denied_explanation,
-//                Snackbar.LENGTH_INDEFINITE
-//            ).setAction(R.string.permission_ok){
-//                startActivity(Intent().apply {
-//                    action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-//                    data = Uri.fromParts("package", BuildConfig.LIBRARY_PACKAGE_NAME, null)
-//                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-//                })
-//            }.show()
-//
-//
-//
-//            Timber.i("RequestForegroundAndBackgroundLocationPermissions")
-//            ActivityCompat.requestPermissions(
-//                requireActivity(),
-//                arrayOf(permission.ACCESS_FINE_LOCATION),
-//                REQUEST_LOCATION_PERMISSION
-//            )
-//
-//        }
     }
 
 
@@ -314,7 +226,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         //SET GEO FENCE
         locationSettingsResponseTask.addOnSuccessListener {
-            if( locationSettingsResponseTask.isSuccessful){
+            if (locationSettingsResponseTask.isSuccessful) {
                 //add geofence
                 Timber.i("AddGeoFence")
             }
@@ -382,7 +294,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 _viewModel.apply {
                     longitude.value = it.longitude
                     latitude.value = it.latitude
-                    reminderSelectedLocationStr.value = getString(R.string.custom_location)
+                    reminderSelectedLocationStr.value = getString(R.string.lat_long_snippet, it.latitude, it.longitude)
                     findNavController().popBackStack()
                 }
             }
@@ -414,12 +326,79 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
-    private fun checkPermissionsAndStartGeofencing() {
 
-        if (foregroundAndBackgroundLocationPermissionApproved(requireContext())) {
-            checkDeviceLocationSettingsAndStartGeofence()
+    /**
+     * Return the current state of the permissions needed.
+     */
+    private fun checkPermissions(): Boolean {
+        val fineLocationPermissionState = ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        val backgroundLocationPermissionState =
+            if(runningQOrLater) {
+                ActivityCompat.checkSelfPermission(
+                    requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                )
+            } else {
+                true
+            }
+
+        return fineLocationPermissionState == PackageManager.PERMISSION_GRANTED &&
+                backgroundLocationPermissionState == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestPermissions() {
+        val permissionAccessFineLocationApproved = (checkSelfPermission(
+            requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED)
+
+        Timber.i("Just asked for foreground permissions.." + permissionAccessFineLocationApproved)
+
+        val backgroundLocationPermissionApproved = (checkSelfPermission(
+            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED)
+
+        Timber.i(("BackgroundLocation Permission: Just asked..." + backgroundLocationPermissionApproved))
+
+        val shouldProvideRationale =
+            permissionAccessFineLocationApproved && backgroundLocationPermissionApproved
+
+        // Provide an additional rationale to the user. This would happen if the user denied the
+        // request previously, but didn't check the "Don't ask again" checkbox.
+        if (shouldProvideRationale) {
+            Timber.i("Display permission rationale to provide additional context")
+
+            Snackbar.make(
+                binding.constraintLayoutMaps,
+                R.string.permission_rationale,
+                Snackbar.LENGTH_INDEFINITE
+            )
+                .setAction(R.string.permission_ok, View.OnClickListener { // Request permission
+                    requestPermissions(
+                        requireActivity(), arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        ),
+                        REQUEST_LOCATION_PERMISSION_CODE
+                    )
+                })
+                .show()
         } else {
-            requestForegroundAndBackgroundLocationPermissions(requireContext())
+
+            Timber.i("Requestion permission")
+            // Request permission. It's possible this can be auto answered if device policy
+            // sets the permission in a given state or the user denied the permission
+            // previously and checked "Never ask again".
+            requestPermissions(
+                requireActivity(), arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                ),
+                REQUEST_LOCATION_PERMISSION_CODE
+            )
         }
     }
+
 }
+
+
+
