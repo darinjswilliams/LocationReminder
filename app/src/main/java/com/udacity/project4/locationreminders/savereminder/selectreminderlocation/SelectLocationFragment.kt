@@ -1,7 +1,7 @@
 package com.udacity.project4.locationreminders.savereminder.selectreminderlocation
 
 
-import android.Manifest
+import android.Manifest.permission
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.IntentSender
@@ -14,7 +14,6 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.*
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.library.BuildConfig
@@ -127,6 +126,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+
+        Timber.i("inside onRequestPermissionResult")
+
         if (requestCode == REQUEST_LOCATION_PERMISSION_CODE) {
             if (grantResults.isEmpty() ||
                 (grantResults[LOCATION_PERMISSION_INDEX] ==
@@ -135,6 +137,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         grantResults[BACKROUND_LOCATION_PERMISSION_INDEX] ==
                         PackageManager.PERMISSION_DENIED)
             ) {
+                Timber.i(("onRequestPermissionResult..show snackbar"))
                 Snackbar.make(
                     binding.map,
                     R.string.permission_denied_explanation,
@@ -150,30 +153,40 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
 
             } else {
+                Timber.i("onRequestPermissionResult..checkDeviceLocationSettingsAndStartGeofence")
                 checkDeviceLocationSettingsAndStartGeofence()
             }
         }
     }
 
 
-    @SuppressLint("MissingPermission")
     private fun enableMyLocation() {
 
-        if (!checkPermissions()) {
-
-            Timber.i("Check Permission was granted")
-            requestPermissions()
-
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            // You can use the API that requires the permission.
             map.isMyLocationEnabled = true
             map.uiSettings.isMyLocationButtonEnabled = true
-
+            Timber.i("Check Permission was granted")
+            requestPermissions()
             checkDeviceLocationSettingsAndStartGeofence()
+        }
+        else {
+            Timber.i("Check Permission was denied")
 
+            ActivityCompat.requestPermissions(
+                requireActivity(), arrayOf(
+                    permission.ACCESS_FINE_LOCATION,
+                    permission.ACCESS_BACKGROUND_LOCATION
+                ),
+                REQUEST_LOCATION_PERMISSION_CODE
+            )
 
         }
-
     }
-
 
     private fun checkDeviceLocationSettingsAndStartGeofence(
         resolve: Boolean = true
@@ -294,7 +307,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 _viewModel.apply {
                     longitude.value = it.longitude
                     latitude.value = it.latitude
-                    reminderSelectedLocationStr.value = getString(R.string.lat_long_snippet, it.latitude, it.longitude)
+                    reminderSelectedLocationStr.value =
+                        getString(R.string.lat_long_snippet, it.latitude, it.longitude)
                     findNavController().popBackStack()
                 }
             }
@@ -331,12 +345,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
      * Return the current state of the permissions needed.
      */
     private fun checkPermissions(): Boolean {
-        val fineLocationPermissionState = ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+        val fineLocationPermissionState = ActivityCompat.checkSelfPermission(
+            requireContext(), permission.ACCESS_FINE_LOCATION
         )
         val backgroundLocationPermissionState =
-            if(runningQOrLater) {
+            if (runningQOrLater) {
                 ActivityCompat.checkSelfPermission(
-                    requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    requireContext(), permission.ACCESS_BACKGROUND_LOCATION
                 )
             } else {
                 true
@@ -348,13 +363,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun requestPermissions() {
         val permissionAccessFineLocationApproved = (checkSelfPermission(
-            requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+            requireContext(), permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED)
 
         Timber.i("Just asked for foreground permissions.." + permissionAccessFineLocationApproved)
 
         val backgroundLocationPermissionApproved = (checkSelfPermission(
-            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            requireContext(), permission.ACCESS_BACKGROUND_LOCATION
         ) == PackageManager.PERMISSION_GRANTED)
 
         Timber.i(("BackgroundLocation Permission: Just asked..." + backgroundLocationPermissionApproved))
@@ -373,10 +388,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 Snackbar.LENGTH_INDEFINITE
             )
                 .setAction(R.string.permission_ok, View.OnClickListener { // Request permission
-                    requestPermissions(
+                    ActivityCompat.requestPermissions(
                         requireActivity(), arrayOf(
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                            permission.ACCESS_FINE_LOCATION,
+                            permission.ACCESS_BACKGROUND_LOCATION
                         ),
                         REQUEST_LOCATION_PERMISSION_CODE
                     )
@@ -388,10 +403,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             // Request permission. It's possible this can be auto answered if device policy
             // sets the permission in a given state or the user denied the permission
             // previously and checked "Never ask again".
-            requestPermissions(
+            ActivityCompat.requestPermissions(
                 requireActivity(), arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    permission.ACCESS_FINE_LOCATION,
+                    permission.ACCESS_BACKGROUND_LOCATION
                 ),
                 REQUEST_LOCATION_PERMISSION_CODE
             )
