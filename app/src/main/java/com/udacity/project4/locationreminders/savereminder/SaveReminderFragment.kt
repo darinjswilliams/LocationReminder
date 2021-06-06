@@ -27,11 +27,8 @@ import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
-import com.udacity.project4.utils.REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
-import com.udacity.project4.utils.REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
-import com.udacity.project4.utils.runningQOrLater
-import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
-import org.koin.android.ext.android.inject
+import com.udacity.project4.utils.*
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
@@ -44,7 +41,7 @@ class SaveReminderFragment : BaseFragment() {
     }
 
     //Get the view model this time as a single to be shared with the another fragment
-    override val _viewModel: SaveReminderViewModel by inject()
+    override val _viewModel by sharedViewModel<SaveReminderViewModel>()
     private lateinit var binding: FragmentSaveReminderBinding
 
 
@@ -104,16 +101,19 @@ class SaveReminderFragment : BaseFragment() {
 
             //Check location permission corresponding location permissions (foreground and background permissions)
             //Check to see if location is enable before adding geoFence
-                if(foregroundAndBackgroundLocationPermissionApproved(requireContext())) {
+              checkDeviceLocationSettingsAndStartGeofence()
+
+                if (foregroundAndBackgroundLocationPermissionApproved(requireContext())) {
                     addGeoFenceReference(
                         LatLng(latitude, longitude),
                         GEOFENCE_RADIUS,
                         reminderDataItem.id
                     )
                 }
-        }
-
+            }
     }
+
+
 
     @SuppressLint("MissingPermission")
     private fun addGeoFenceReference(latLng: LatLng, geofenceRadius: Float, id: String) {
@@ -133,27 +133,17 @@ class SaveReminderFragment : BaseFragment() {
 
         // When removeGeofences() completes, regardless of its success or failure, add the new geofences.
         geofencingClient.removeGeofences(geofencePendingIntent).run {
-            addOnCompleteListener({
+            addOnCompleteListener {
                 geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
                     addOnSuccessListener {
-//                        Toast.makeText(
-//                            context,
-//                            "GEO FENCE ENTERED",
-//                            Toast.LENGTH_LONG
-//                        ).show()
                         Timber.i("GEO FENCE ADDED")
                     }
 
                     addOnFailureListener {
-//                        Toast.makeText(
-//                            context,
-//                            "GEO FENCE NO FAILURE",
-//                            Toast.LENGTH_LONG
-//                        ).show()
                         Timber.i("GEO FENCE FAILED")
                     }
                 }
-            })
+            }
         }
 
 

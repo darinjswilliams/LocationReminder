@@ -47,7 +47,7 @@ class RemindersListViewModelTest {
     }
 
     @Test
-    fun loadReminder_showLoading_whenLoadingData_returnTrue_afterLoadingData_returnFalse() {
+    fun loadReminder_whenShowLoading_returnTrue_afterLoadingData_returnFalse() {
         // Pause dispatcher so you can verify initial values.
         mainCoroutineRule.pauseDispatcher()
 

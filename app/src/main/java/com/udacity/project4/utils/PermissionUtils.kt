@@ -4,16 +4,25 @@ package com.udacity.project4.utils
 
 import android.Manifest
 import android.content.Context
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.R
+import timber.log.Timber
 
 
 const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
 const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
+const val REQUEST_LOCATION_PERMISSION_CODE = 25
+const val REQUEST_TURN_DEVICE_LOCATION_ON = 20
 
 val runningQOrLater = VERSION.SDK_INT >= VERSION_CODES.Q
 
@@ -59,6 +68,70 @@ fun Fragment.requestPermissionWithRationale(
     } else {
         requestPermissions(arrayOf(permission), requestCode)
     }
+}
+
+
+fun Fragment.checkDeviceLocationSettingsAndStartGeofence(
+    resolve: Boolean = true
+) {
+
+    /*
+    * Get the best and most recent location of the device, which may be null in rare
+    * cases when a location is not available.
+    */
+    val locationRequest = LocationRequest.create().apply {
+        priority = LocationRequest.PRIORITY_LOW_POWER
+    }
+    val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+    val settingsClient = LocationServices.getSettingsClient(requireActivity())
+    val locationSettingsResponseTask =
+        settingsClient.checkLocationSettings(builder.build())
+
+
+    locationSettingsResponseTask.addOnFailureListener { exception ->
+        if (exception is ResolvableApiException && resolve) {
+            try {
+
+                //Show location setting
+                exception.startResolutionForResult(
+                    requireActivity(),
+                    REQUEST_TURN_DEVICE_LOCATION_ON
+                )
+
+                startIntentSenderForResult(
+                    exception.resolution.intentSender,
+                    REQUEST_TURN_DEVICE_LOCATION_ON,
+                    null,
+                    0,
+                    0,
+                    0,
+                    null
+                )
+
+            } catch (sendEx: IntentSender.SendIntentException) {
+                Timber.d(getString(R.string.error_location_settings), "... ${sendEx.message}")
+            }
+        }
+                    Timber.i("Location is off")
+                    Snackbar.make(
+                        requireView(),
+                        R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                    ).setAction(android.R.string.ok) {
+                        checkDeviceLocationSettingsAndStartGeofence()
+                    }.show()
+
+    }
+
+
+    //SET GEO FENCE
+    locationSettingsResponseTask.addOnSuccessListener {
+        if (locationSettingsResponseTask.isSuccessful) {
+            //add geofence
+            Timber.i("AddGeoFence")
+        }
+
+    }
+
 }
 
 
