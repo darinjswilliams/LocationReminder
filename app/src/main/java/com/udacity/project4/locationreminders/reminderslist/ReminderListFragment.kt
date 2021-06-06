@@ -68,7 +68,7 @@ class ReminderListFragment : BaseFragment() {
         val adapter = RemindersListAdapter {
         }
 
-//        setup the recycler view using the extension function
+        //setup the recycler view using the extension function
         binding.reminderssRecyclerView.setup(adapter)
     }
 
@@ -89,7 +89,7 @@ class ReminderListFragment : BaseFragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
-//        display logout as menu item
+        //display logout as menu item
         inflater.inflate(R.menu.main_menu, menu)
     }
 

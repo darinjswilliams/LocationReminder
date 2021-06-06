@@ -1,13 +1,11 @@
 package com.udacity.project4.locationreminders.savereminder.selectreminderlocation
 
 
-import android.Manifest
 import android.Manifest.permission
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
-import android.os.Build
 import android.os.Bundle
 import android.view.*
 import androidx.core.app.ActivityCompat
@@ -39,10 +37,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         private const val DEFAULT_ZOOM = 15f
         private const val REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE = 33
         private const val REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE = 34
-        private const val REQUEST_TURN_DEVICE_LOCATION_ON = 5
     }
-
-    val runningQOrLater = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel by sharedViewModel<SaveReminderViewModel>()
@@ -63,7 +58,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         )
             .setAction(R.string.permission_ok) {
                 requestPermissions(
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    arrayOf(permission.ACCESS_FINE_LOCATION),
                     REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE
                 )
             }
@@ -147,15 +142,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         grantResults: IntArray
     ) {
 
-        Timber.i("inside onRequestPermissionResult")
-
         if (requestCode == REQUEST_LOCATION_PERMISSION_CODE) {
             when {
                 grantResults.isEmpty() -> {
                     Timber.i(("request was canceled by user"))
                 }
                 grantResults[0] == PackageManager.PERMISSION_GRANTED -> {
-                    Timber.i("onRequestPermissionResult..permission granted")
                     checkDeviceLocationSettingsAndStartGeofence()
                 }
                 else -> {
@@ -164,10 +156,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     // Notify the user via a SnackBar that they have rejected a core permission for the
                     // app, which makes the Activity useless. In a real app, core permissions would
                     // typically be best requested during a welcome-screen flow.
-
-
                     requestPermissionWithRationale(permission.ACCESS_FINE_LOCATION, REQUEST_LOCATION_PERMISSION_CODE, fineLocationRationalSnackbar)
-
                 }
             }
         }
@@ -177,8 +166,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun enableMyLocation() {
 
         if (context?.isPermissionGranted() == true) {
-
-            Timber.i("Check Permission was granted")
             requestPermissions()
 
         } else {
