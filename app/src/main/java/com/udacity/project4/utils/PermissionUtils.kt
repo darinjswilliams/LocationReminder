@@ -8,7 +8,7 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
-import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
@@ -27,7 +27,7 @@ val runningQOrLater = VERSION.SDK_INT >= VERSION_CODES.Q
 
 
 fun Context.isPermissionGranted(): Boolean {
-    return ActivityCompat.checkSelfPermission(
+    return ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
@@ -44,7 +44,7 @@ fun Context.hasPermission(permission: String): Boolean {
         return true
     }
 
-    return ActivityCompat.checkSelfPermission(this, permission) ==
+    return ContextCompat.checkSelfPermission(this, permission) ==
             PackageManager.PERMISSION_GRANTED
 }
 

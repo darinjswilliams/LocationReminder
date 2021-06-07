@@ -8,7 +8,6 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.Bundle
 import android.view.*
-import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -35,7 +34,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     companion object {
         private val REQUEST_LOCATION_PERMISSION_CODE = 25
         private const val DEFAULT_ZOOM = 15f
-        private const val REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE = 33
+        private const val REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE = 56
         private const val REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE = 34
     }
 
@@ -142,7 +141,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         grantResults: IntArray
     ) {
 
-        if (requestCode == REQUEST_LOCATION_PERMISSION_CODE) {
+        if (requestCode == REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE) {
             when {
                 grantResults.isEmpty() -> {
                     Timber.i(("request was canceled by user"))
@@ -156,7 +155,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     // Notify the user via a SnackBar that they have rejected a core permission for the
                     // app, which makes the Activity useless. In a real app, core permissions would
                     // typically be best requested during a welcome-screen flow.
-                    requestPermissionWithRationale(permission.ACCESS_FINE_LOCATION, REQUEST_LOCATION_PERMISSION_CODE, fineLocationRationalSnackbar)
+                    Timber.i(("request was denied"))
+//                    requestPermissions(permissions, requestCode)
+                    requestPermissionWithRationale(permission.ACCESS_FINE_LOCATION, REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE, fineLocationRationalSnackbar)
                 }
             }
         }
@@ -304,17 +305,25 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             // sets the permission in a given state or the user denied the permission
             // previously and checked "Never ask again".
 
+            if(permissionAccessFineLocationApproved == false){
+
             requestPermissionWithRationale(
-                permission.ACCESS_BACKGROUND_LOCATION,
-                REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE,
-                backgroundRationalSnackbar
+                permission.ACCESS_FINE_LOCATION,
+                REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE,
+                fineLocationRationalSnackbar
             )
-            ActivityCompat.requestPermissions(
-                requireActivity(), arrayOf(
-                    permission.ACCESS_BACKGROUND_LOCATION
-                ),
-                REQUEST_LOCATION_PERMISSION_CODE
-            )
+
+            }
+
+            if(backgroundLocationPermissionApproved == false){
+                requestPermissionWithRationale(
+                    permission.ACCESS_BACKGROUND_LOCATION,
+                    REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE,
+                    backgroundRationalSnackbar
+                )
+
+            }
+
         }
     }
 }
