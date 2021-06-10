@@ -141,12 +141,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         grantResults: IntArray
     ) {
 
-        if (requestCode == REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE) {
+        if (requestCode == REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE ) {
             when {
                 grantResults.isEmpty() -> {
                     Timber.i(("request was canceled by user"))
                 }
                 grantResults[0] == PackageManager.PERMISSION_GRANTED -> {
+                    requestPermissions()
                     checkDeviceLocationSettingsAndStartGeofence()
                 }
                 else -> {
@@ -156,8 +157,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     // app, which makes the Activity useless. In a real app, core permissions would
                     // typically be best requested during a welcome-screen flow.
                     Timber.i(("request was denied"))
-//                    requestPermissions(permissions, requestCode)
-                    requestPermissionWithRationale(permission.ACCESS_FINE_LOCATION, REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE, fineLocationRationalSnackbar)
+                    requestPermissionWithRationale(permission.ACCESS_FINE_LOCATION,
+                        REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE,
+                        fineLocationRationalSnackbar)
+
                 }
             }
         }
