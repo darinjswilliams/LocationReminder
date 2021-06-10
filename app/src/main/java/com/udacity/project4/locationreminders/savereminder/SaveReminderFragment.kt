@@ -97,20 +97,20 @@ class SaveReminderFragment : BaseFragment() {
 
         if (latitude != null && longitude != null && !TextUtils.isEmpty(title) && !isDetached) {
 
-            //Check location permission corresponding location permissions (foreground and background permissions)
+
             //Check to see if location is enable before adding geoFence
-              checkDeviceLocationSettingsAndStartGeofence()
+            checkDeviceLocationSettingsAndStartGeofence()
 
-                if (foregroundAndBackgroundLocationPermissionApproved(requireContext())) {
-                    addGeoFenceReference(
-                        LatLng(latitude, longitude),
-                        GEOFENCE_RADIUS,
-                        reminderDataItem.id
-                    )
-                }
+            //Check location permission corresponding location permissions (foreground and background permissions)
+            if (foregroundAndBackgroundLocationPermissionApproved(requireContext())) {
+                addGeoFenceReference(
+                    LatLng(latitude, longitude),
+                    GEOFENCE_RADIUS,
+                    reminderDataItem.id
+                )
             }
+        }
     }
-
 
 
     @SuppressLint("MissingPermission")
@@ -152,7 +152,7 @@ class SaveReminderFragment : BaseFragment() {
         _viewModel.onClear()
     }
 
-    @TargetApi(29 )
+    @TargetApi(29)
     fun requestForegroundAndBackgroundLocationPermissions(context: Context) {
         if (foregroundAndBackgroundLocationPermissionApproved(context))
             return
@@ -174,8 +174,10 @@ class SaveReminderFragment : BaseFragment() {
     fun foregroundAndBackgroundLocationPermissionApproved(context: Context): Boolean {
         val foregroundLocationPermissionApproved = (
                 PackageManager.PERMISSION_GRANTED ==
-                        ContextCompat.checkSelfPermission(context,
-                            Manifest.permission.ACCESS_FINE_LOCATION))
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ))
         val backgroundLocationPermissionApproved =
             if (runningQOrLater) {
                 PackageManager.PERMISSION_GRANTED ==

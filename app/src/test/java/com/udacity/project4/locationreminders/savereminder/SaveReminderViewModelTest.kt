@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.dto.Result
+import com.udacity.project4.locationreminders.getOrAwaitValueForTest
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.locationreminders.rule.MainCoroutineRule
 import kotlinx.coroutines.test.runBlockingTest
@@ -63,13 +64,13 @@ class SaveReminderViewModelTest {
             reminderResult as Result.Success
 
             //Then
-            assertThat(saveReminderViewModel.showLoading.value, `is`(false))
+            assertThat(saveReminderViewModel.showLoading.getOrAwaitValueForTest(), `is`(false))
             assertThat(reminderResult.data.title, `is`(reminderData.title))
             assertThat(reminderResult.data.description, `is`(reminderData.description))
             assertThat(reminderResult.data.location, `is`(reminderData.location))
             assertThat(reminderResult.data.latitude, `is`(reminderData.latitude))
             assertThat(reminderResult.data.longitude, `is`(reminderData.longitude))
-            assertThat(saveReminderViewModel.showToast.value, `is`("Reminder Saved !"))
+            assertThat(saveReminderViewModel.showToast.getOrAwaitValueForTest(), `is`("Reminder Saved !"))
         }
 
 
@@ -90,7 +91,7 @@ class SaveReminderViewModelTest {
             reminderResult as Result.Success
 
             assertThat(
-                saveReminderViewModel.showToast.value,
+                saveReminderViewModel.showToast.getOrAwaitValueForTest(),
                 `is`(equalTo("Reminder Saved !"))
             )
         }
@@ -113,10 +114,6 @@ class SaveReminderViewModelTest {
 
         assertThat(reminderResult.message, `is`(equalTo("Reminder Not Found for " + reminderData.id)))
 
-        assertThat(
-            saveReminderViewModel.showToast.value,
-            `is`(equalTo(null))
-        )
     }
 
     @Test
@@ -170,13 +167,13 @@ class SaveReminderViewModelTest {
             val reminderResult = fakeDataSource.getReminder(reminderData.id)
             reminderResult as Result.Success
             assertThat(
-                saveReminderViewModel.showToast.value,
+                saveReminderViewModel.showToast.getOrAwaitValueForTest(),
                 `is`(equalTo("Reminder Saved !"))
             )
 
             //then
             saveReminderViewModel.onClear()
-            assertThat(saveReminderViewModel.latitude.value, `is`(nullValue()))
+            assertThat(saveReminderViewModel.latitude.getOrAwaitValueForTest(), `is`(nullValue()))
 
 
             fakeDataSource.deleteAllReminders()

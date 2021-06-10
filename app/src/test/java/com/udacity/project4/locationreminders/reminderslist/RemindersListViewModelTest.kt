@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
+import com.udacity.project4.locationreminders.getOrAwaitValueForTest
 import com.udacity.project4.locationreminders.rule.MainCoroutineRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -36,7 +37,7 @@ class RemindersListViewModelTest {
 
     @Before
     fun setUpViewModel() {
-        fakeDataSource = FakeDataSource(buildReminderData())
+        fakeDataSource = FakeDataSource(buildReminderData().toMutableList())
         reminderListViewModel =
             RemindersListViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
     }
@@ -55,32 +56,38 @@ class RemindersListViewModelTest {
         reminderListViewModel.loadReminders()
 
         // Then assert that the progress indicator is shown.
-        assertThat(reminderListViewModel.showLoading.value, `is`(true))
+        assertThat(reminderListViewModel.showLoading.getOrAwaitValueForTest(), `is`(true))
 
         // Execute pending coroutines actions.
         mainCoroutineRule.resumeDispatcher()
 
         // Then assert that the progress indicator is shown.
-        assertThat(reminderListViewModel.showLoading.value, `is`(false))
+        assertThat(reminderListViewModel.showLoading.getOrAwaitValueForTest(), `is`(false))
 
 
     }
 
     @Test
-    fun loadReminders_addToReminderList_returnPopulateList() =
+    fun loadReminders_whenShouldReturnError_isFalse_thenReturnList() = mainCoroutineRule.runBlockingTest {
+        fakeDataSource.setShouldReturnError(false)
+        reminderListViewModel.loadReminders()
+
+        val rListValue = reminderListViewModel.remindersList.getOrAwaitValueForTest()
+
+        assertThat(rListValue, `is`(notNullValue()))
+        assertThat(rListValue, hasSize(equalTo(4)))
+    }
+
+    @Test
+    fun loadReminders_whenShouldReturnError_isTrue_thenReturnRemindersNotFound() =
         mainCoroutineRule.runBlockingTest {
-
-            //Given
+            fakeDataSource.setShouldReturnError(true)
             reminderListViewModel.loadReminders()
+            val value = reminderListViewModel.showSnackBar.getOrAwaitValueForTest()
 
-
-            //When
-            val reminderList = reminderListViewModel.remindersList.value
-
-            //Then
-            assertThat(reminderList, hasSize(equalTo(4)))
-
+            assertThat(value, `is`("Reminders not found"))
         }
+
 
 
     @Test
@@ -89,8 +96,6 @@ class RemindersListViewModelTest {
 
             //Given
             fakeDataSource.deleteAllReminders()
-
-
 
             reminderListViewModel.loadReminders()
 
@@ -137,7 +142,7 @@ class RemindersListViewModelTest {
             assertThat(noData, `is`(false))
         }
 
-    private fun buildReminderData() = arrayListOf(
+    private fun buildReminderData() = listOf(
         ReminderDTO(
             "someTitle",
             "someDescription", "someLocation", 32.776665,
