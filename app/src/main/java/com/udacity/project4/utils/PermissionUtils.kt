@@ -22,11 +22,6 @@ import timber.log.Timber
 const val REQUEST_TURN_DEVICE_LOCATION_ON = 20
 
 
-val runningQOrLater = VERSION.SDK_INT >= VERSION_CODES.Q
-
-
-
-
 fun Context.isPermissionGranted(): Boolean {
     return ContextCompat.checkSelfPermission(
             this,
