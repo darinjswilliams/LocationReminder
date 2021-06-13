@@ -10,6 +10,7 @@ import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
@@ -23,10 +24,7 @@ import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
-import com.udacity.project4.utils.checkDeviceLocationSettings
-import com.udacity.project4.utils.hasPermission
-import com.udacity.project4.utils.requestPermissionWithRationale
-import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
+import com.udacity.project4.utils.*
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
@@ -113,6 +111,14 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
+            Timber.i("Device is on")
+        } else {
+            Timber.i("Location is not turned on")
+        }
+    }
 
     //TODO not sure if i need this
     override fun onRequestPermissionsResult(
@@ -156,24 +162,21 @@ class SaveReminderFragment : BaseFragment() {
             latitude, longitude
         )
 
-        //Save Reminder
-        _viewModel.validateAndSaveReminder(reminderDataItem)
+        //Validate EnterData
+        _viewModel.validateEnteredData(reminderDataItem)
 
         if (latitude != null && longitude != null && !TextUtils.isEmpty(title) && !isDetached) {
-
-
-            //Check to see if location is enable before saving reminder and adding geoFence
-            checkDeviceLocationSettings()
 
 
             //Check  permissions (foreground and background permissions)
             if (requestPermissions()) {
 
+                //Check to see if location is enable before saving reminder and adding geoFence
+                checkDeviceLocationSettings()
                 //Add Geo Fence
                 addGeoFenceReference(
                     LatLng(latitude, longitude),
-                    GEOFENCE_RADIUS,
-                    reminderDataItem.id
+                    reminderDataItem
                 )
             }
         }
@@ -181,11 +184,11 @@ class SaveReminderFragment : BaseFragment() {
 
 
     @SuppressLint("MissingPermission")
-    private fun addGeoFenceReference(latLng: LatLng, geofenceRadius: Float, id: String) {
+    private fun addGeoFenceReference(latLng: LatLng, reminderDataItem: ReminderDataItem) {
 
         //Create GeoFence parameter
         val geofence = Geofence.Builder()
-            .setRequestId(id)
+            .setRequestId(reminderDataItem.id)
             .setCircularRegion(latLng.latitude, latLng.longitude, GEOFENCE_RADIUS)
             .setExpirationDuration(TimeUnit.HOURS.toMillis(1))
             .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
@@ -202,10 +205,19 @@ class SaveReminderFragment : BaseFragment() {
                 geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
                     addOnSuccessListener {
                         Timber.i("GEO FENCE ADDED")
+                        //Save Reminder
+                        _viewModel.validateAndSaveReminder(reminderDataItem)
                     }
 
                     addOnFailureListener {
                         Timber.i("GEO FENCE FAILED")
+                        Toast.makeText(context, R.string.geofences_not_added, Toast.LENGTH_LONG).show()
+
+                        Snackbar.make(
+                            requireView(),
+                            R.string.geofences_not_added,
+                            Snackbar.LENGTH_LONG
+                        ).show()
                     }
                 }
             }

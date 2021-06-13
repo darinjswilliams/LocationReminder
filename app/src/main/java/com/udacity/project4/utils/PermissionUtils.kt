@@ -93,11 +93,6 @@ fun Fragment.checkDeviceLocationSettings(
             try {
 
                 //Show location setting
-                exception.startResolutionForResult(
-                    requireActivity(),
-                    REQUEST_TURN_DEVICE_LOCATION_ON
-                )
-
                 startIntentSenderForResult(
                     exception.resolution.intentSender,
                     REQUEST_TURN_DEVICE_LOCATION_ON,
