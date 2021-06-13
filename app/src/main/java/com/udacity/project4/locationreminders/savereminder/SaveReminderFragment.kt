@@ -213,11 +213,6 @@ class SaveReminderFragment : BaseFragment() {
                         Timber.i("GEO FENCE FAILED")
                         Toast.makeText(context, R.string.geofences_not_added, Toast.LENGTH_LONG).show()
 
-                        Snackbar.make(
-                            requireView(),
-                            R.string.geofences_not_added,
-                            Snackbar.LENGTH_LONG
-                        ).show()
                     }
                 }
             }
