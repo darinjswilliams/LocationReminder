@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.TextUtils
@@ -12,10 +13,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
-import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.GeofencingRequest
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
@@ -171,10 +170,9 @@ class SaveReminderFragment : BaseFragment() {
             //Check  permissions (foreground and background permissions)
             if (requestPermissions()) {
 
-                //Check to see if location is enable before saving reminder and adding geoFence
-                checkDeviceLocationSettings()
-                //Add Geo Fence
-                addGeoFenceReference(
+                //Check to see if location is enable before saving reminder
+                // Add Geo Fence only if permission are enable and location is enable
+                checkDeviceLocationSettingsAndAddGeoFence(
                     LatLng(latitude, longitude),
                     reminderDataItem
                 )
@@ -278,4 +276,69 @@ class SaveReminderFragment : BaseFragment() {
 
         return shouldProvideRationale
     }
+
+  private  fun checkDeviceLocationSettingsAndAddGeoFence(
+        latLng: LatLng,
+        reminderDataItem: ReminderDataItem,
+        resolve: Boolean = true
+    ) {
+
+        /*
+        * Get the best and most recent location of the device, which may be null in rare
+        * cases when a location is not available.
+        */
+        val locationRequest = LocationRequest.create().apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+
+        //Get Current Location Request
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+
+        val settingsClient = LocationServices.getSettingsClient(requireActivity())
+        val locationSettingsResponseTask =
+            settingsClient.checkLocationSettings(builder.build())
+
+
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve) {
+                try {
+
+                    //Show location setting
+                    startIntentSenderForResult(
+                        exception.resolution.intentSender,
+                        REQUEST_TURN_DEVICE_LOCATION_ON,
+                        null,
+                        0,
+                        0,
+                        0,
+                        null
+                    )
+
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    Timber.d(getString(R.string.error_location_settings), "... ${sendEx.message}")
+                }
+            }
+            Timber.i("Location is off")
+            Snackbar.make(
+                requireView(),
+                R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+            ).setAction(android.R.string.ok) {
+                checkDeviceLocationSettingsAndAddGeoFence( latLng, reminderDataItem)
+            }.show()
+
+        }
+
+
+        locationSettingsResponseTask.addOnSuccessListener {
+            if (locationSettingsResponseTask.isSuccessful) {
+                Timber.i("Location Settings is on Add Geo Fence")
+                addGeoFenceReference(latLng, reminderDataItem)
+            }
+
+        }
+
+    }
+
 }
