@@ -118,7 +118,6 @@ fun Fragment.checkDeviceLocationSettings(
     }
 
 
-    //SET GEO FENCE
     locationSettingsResponseTask.addOnSuccessListener {
         if (locationSettingsResponseTask.isSuccessful) {
             Timber.i("Location Settings is on")

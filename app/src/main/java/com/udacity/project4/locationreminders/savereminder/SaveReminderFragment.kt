@@ -120,7 +120,7 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    //TODO not sure if i need this
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
