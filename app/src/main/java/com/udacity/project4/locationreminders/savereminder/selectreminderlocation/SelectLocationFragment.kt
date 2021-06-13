@@ -32,7 +32,6 @@ import timber.log.Timber
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     companion object {
-        private val REQUEST_LOCATION_PERMISSION_CODE = 25
         private const val DEFAULT_ZOOM = 15f
         private const val REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE = 56
         private const val REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE = 34
@@ -148,7 +147,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 }
                 grantResults[0] == PackageManager.PERMISSION_GRANTED -> {
                     requestPermissions()
-                    checkDeviceLocationSettingsAndStartGeofence()
+                    checkDeviceLocationSettings()
                 }
                 else -> {
                     // Permission denied.
@@ -184,7 +183,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
      override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        checkDeviceLocationSettingsAndStartGeofence(false)
+        checkDeviceLocationSettings(false)
     }
 
 
@@ -299,7 +298,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         // request previously, but didn't check the "Don't ask again" checkbox.
         if (shouldProvideRationale) {
 
-            checkDeviceLocationSettingsAndStartGeofence()
+            checkDeviceLocationSettings()
 
         } else {
 

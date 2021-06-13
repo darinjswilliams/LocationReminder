@@ -22,8 +22,12 @@ import timber.log.Timber
 const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
 const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 const val REQUEST_TURN_DEVICE_LOCATION_ON = 20
+const val REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE = 56
+private const val REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE = 34
 
 val runningQOrLater = VERSION.SDK_INT >= VERSION_CODES.Q
+
+
 
 
 fun Context.isPermissionGranted(): Boolean {
@@ -70,7 +74,7 @@ fun Fragment.requestPermissionWithRationale(
 }
 
 
-fun Fragment.checkDeviceLocationSettingsAndStartGeofence(
+fun Fragment.checkDeviceLocationSettings(
     resolve: Boolean = true
 ) {
 
@@ -79,9 +83,14 @@ fun Fragment.checkDeviceLocationSettingsAndStartGeofence(
     * cases when a location is not available.
     */
     val locationRequest = LocationRequest.create().apply {
+        interval = 10000
+        fastestInterval = 5000
         priority = LocationRequest.PRIORITY_LOW_POWER
     }
+
+    //Get Current Location Request
     val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+
     val settingsClient = LocationServices.getSettingsClient(requireActivity())
     val locationSettingsResponseTask =
         settingsClient.checkLocationSettings(builder.build())
@@ -116,7 +125,7 @@ fun Fragment.checkDeviceLocationSettingsAndStartGeofence(
                         requireView(),
                         R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
                     ).setAction(android.R.string.ok) {
-                        checkDeviceLocationSettingsAndStartGeofence()
+                        checkDeviceLocationSettings()
                     }.show()
 
     }
@@ -125,13 +134,13 @@ fun Fragment.checkDeviceLocationSettingsAndStartGeofence(
     //SET GEO FENCE
     locationSettingsResponseTask.addOnSuccessListener {
         if (locationSettingsResponseTask.isSuccessful) {
-            //add geofence
-            Timber.i("AddGeoFence")
+            Timber.i("Location Settings is on")
         }
 
     }
 
 }
+
 
 
 

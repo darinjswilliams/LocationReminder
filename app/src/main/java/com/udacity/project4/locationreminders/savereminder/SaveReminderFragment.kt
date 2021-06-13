@@ -2,9 +2,7 @@ package com.udacity.project4.locationreminders.savereminder
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -12,20 +10,23 @@ import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
-import com.udacity.project4.utils.*
+import com.udacity.project4.utils.checkDeviceLocationSettings
+import com.udacity.project4.utils.hasPermission
+import com.udacity.project4.utils.requestPermissionWithRationale
+import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
@@ -36,7 +37,10 @@ class SaveReminderFragment : BaseFragment() {
         private const val GEOFENCE_RADIUS = 100f
         private const val ACTION_GEOFENCE_EVENT =
             "SaveReminderFragment.locationreminders.action.ACTIONGEOFENCE_EVENT"
+        private const val REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE = 56
+        private const val REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE = 34
     }
+
 
     //Get the view model this time as a single to be shared with the another fragment
     override val _viewModel by sharedViewModel<SaveReminderViewModel>()
@@ -48,6 +52,34 @@ class SaveReminderFragment : BaseFragment() {
         val intent = Intent(requireContext(), GeofenceBroadcastReceiver::class.java)
         intent.action = ACTION_GEOFENCE_EVENT
         PendingIntent.getBroadcast(requireContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    }
+
+    private val fineLocationRationalSnackbar by lazy {
+        Snackbar.make(
+            requireView(),
+            R.string.fine_location_permission_rationale,
+            Snackbar.LENGTH_INDEFINITE
+        )
+            .setAction(R.string.permission_ok) {
+                requestPermissions(
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    SaveReminderFragment.REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE
+                )
+            }
+    }
+
+    private val backgroundRationalSnackbar by lazy {
+        Snackbar.make(
+            requireView(),
+            R.string.background_location_permission_rationale,
+            Snackbar.LENGTH_INDEFINITE
+        )
+            .setAction(R.string.permission_ok) {
+                requestPermissions(
+                    arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                    SaveReminderFragment.REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE
+                )
+            }
     }
 
     override fun onCreateView(
@@ -81,6 +113,37 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
+
+    //TODO not sure if i need this
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+
+            REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE,
+            REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE ->
+                when {
+                    grantResults.isEmpty() -> {
+                        Timber.i(("request was canceled by user"))
+                    }
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED -> {
+                        checkDeviceLocationSettings()
+                    }
+                    else -> {
+                        // Permission denied.
+
+                        // Notify the user via a SnackBar that they have rejected a core permission for the
+                        // app, which makes the Activity useless. In a real app, core permissions would
+                        // typically be best requested during a welcome-screen flow.
+                        Timber.i(("request was denied"))
+                        requestPermissions(permissions, requestCode)
+                    }
+                }
+        }
+    }
+
     private fun saveReminderViewModel() {
         val title = _viewModel.reminderTitle.value
         val description = _viewModel.reminderDescription.value
@@ -93,16 +156,20 @@ class SaveReminderFragment : BaseFragment() {
             latitude, longitude
         )
 
+        //Save Reminder
         _viewModel.validateAndSaveReminder(reminderDataItem)
 
         if (latitude != null && longitude != null && !TextUtils.isEmpty(title) && !isDetached) {
 
 
-            //Check to see if location is enable before adding geoFence
-            checkDeviceLocationSettingsAndStartGeofence()
+            //Check to see if location is enable before saving reminder and adding geoFence
+            checkDeviceLocationSettings()
 
-            //Check location permission corresponding location permissions (foreground and background permissions)
-            if (foregroundAndBackgroundLocationPermissionApproved(requireContext())) {
+
+            //Check  permissions (foreground and background permissions)
+            if (requestPermissions()) {
+
+                //Add Geo Fence
                 addGeoFenceReference(
                     LatLng(latitude, longitude),
                     GEOFENCE_RADIUS,
@@ -152,42 +219,56 @@ class SaveReminderFragment : BaseFragment() {
         _viewModel.onClear()
     }
 
-    @TargetApi(29)
-    fun requestForegroundAndBackgroundLocationPermissions(context: Context) {
-        if (foregroundAndBackgroundLocationPermissionApproved(context))
-            return
-        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-        val resultCode = when {
-            runningQOrLater -> {
-                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
-            }
-            else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
-        }
-        requestPermissions(
-            permissionsArray,
-            resultCode
-        )
-    }
 
-    @TargetApi(29)
-    fun foregroundAndBackgroundLocationPermissionApproved(context: Context): Boolean {
-        val foregroundLocationPermissionApproved = (
-                PackageManager.PERMISSION_GRANTED ==
-                        ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ))
+    private fun requestPermissions(): Boolean {
+
+        val permissionAccessFineLocationApproved =
+            context?.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+        Timber.i("Forground Permission:..." + permissionAccessFineLocationApproved)
+
         val backgroundLocationPermissionApproved =
-            if (runningQOrLater) {
-                PackageManager.PERMISSION_GRANTED ==
-                        ContextCompat.checkSelfPermission(
-                            context, Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        )
-            } else {
-                //Return true if the device is running lower than Q
-                true
+            context?.hasPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+        Timber.i("BackgroundLocation:..." + backgroundLocationPermissionApproved)
+
+        val shouldProvideRationale =
+            permissionAccessFineLocationApproved == true &&
+                    backgroundLocationPermissionApproved == true
+
+        // Provide an additional rationale to the user. This would happen if the user denied the
+        // request previously, but didn't check the "Don't ask again" checkbox.
+        if (shouldProvideRationale) {
+
+            return true
+
+        } else {
+
+            Timber.i("Requestion permission denied")
+            // Request permission. It's possible this can be auto answered if device policy
+            // sets the permission in a given state or the user denied the permission
+            // previously and checked "Never ask again".
+
+            if (permissionAccessFineLocationApproved == false) {
+
+                requestPermissionWithRationale(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    REQUEST_FINE_LOCATION_PERMISSIONS_REQUEST_CODE,
+                    fineLocationRationalSnackbar
+                )
+
             }
-        return foregroundLocationPermissionApproved && backgroundLocationPermissionApproved
+
+            if (backgroundLocationPermissionApproved == false) {
+                requestPermissionWithRationale(
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                    REQUEST_BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE,
+                    backgroundRationalSnackbar
+                )
+
+            }
+
+        }
+
+        return shouldProvideRationale
     }
 }
